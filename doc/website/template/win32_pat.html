@@ -1,0 +1,235 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+     "http://www.w3.org/TR/REC-html40/loose.dtd"> 
+
+<html>
+<head><title>gretl for Windows</title>
+<LINK REL=STYLESHEET TYPE="text/css" HREF="../css-gretl.html" />
+<link rel="shortcut icon" href="http://gretl.sf.net/favicon.ico" type="image/x-icon" />
+</head>
+
+<body>
+
+<p>[<a href="http://gretl.sourceforge.net/index.html">gretl main page</a>]</p>
+
+<center>
+<h1>Gretl: Gnu Regression, Econometrics and Time-series Library</h1>
+<h2>for Microsoft Windows</h2>
+</center>
+
+<h2>System requirements</h2>
+
+<p>As of version 1.9.4, gretl requires Windows XP or higher and a processor that supports the
+SSE2 instruction set. SSE2 support is found in all modern processors; it is absent in AMD CPUs
+prior to the Athlon 64, and in Intel CPUs prior to the Pentium 4. For versions of gretl that
+will run on older systems, <a href="#old-windows">see below</a>.</p>
+
+<h2>Downloads</h2>
+
+<p>If you have the rights of a "power-user" or better on Windows, choose a self-installer 
+from the first or second column below; just download and run the <kbd>exe</kbd> file. This
+applies to most people.</p> 
+
+<p>If you have no administrator rights on Windows choose a zip archive from the third column;
+unzip this in any location where you have write permission. <i>Note</i>: you must
+preserve the internal directory structure of the archive or gretl will not work. In unzipping
+programs this option may be called "enable folders". The whole archive is in a directory called
+<kbd>gretl</kbd>. For example, if you unzip the archive into a directory named
+<kbd>c:\userdata</kbd>, the gretl GUI program will be at
+<kbd>c:\userdata\gretl\gretl.exe</kbd>. </p>
+
+<p>The current "snapshot" of gretl is more up to date than the release: often it will 
+contain bug-fixes but sometimes it will contain newly introduced bugs. To see what's
+new in the snapshot, take a look at the  <a href="../ChangeLog.html">Change log</a>
+(the "in progress" entry).</p>
+
+<p>Note: the 32-bit version of gretl will run on 64-bit Windows, but not vice versa.
+If you're not sure if your Windows installation is 64-bit or not you can check at the
+<a href="http://support.microsoft.com/kb/827218">Microsoft knowledge base</a>.
+</p>
+
+
+<table cellpadding="4">
+<tr><td>&nbsp;</td><td><p><i>self-installer (32-bit)</i></p></td>
+<td><p><i>self-installer (64-bit)</i></p></td><td><p>OR</p></td>
+<td><p><i>zip archive (no admin rights)</i></p></td></tr>
+<tr>
+<td><p>latest release (SHORTDATE)</p></td>
+<td><p>
+<a href="http://prdownloads.sourceforge.net/gretl/gretl-VERSION.exe">gretl-VERSION.exe</a>
+</p></td>
+<td><p>
+<a href="http://prdownloads.sourceforge.net/gretl/gretl-VERSION-64.exe">gretl-VERSION-64.exe</a>
+</p></td>
+<td>&nbsp;</td>
+<td><p>
+<a href="http://prdownloads.sourceforge.net/gretl/gretl-VERSION-win32.zip">gretl-VERSION-win32.zip</a>
+</p></td>
+</tr>
+
+<tr>
+<td><p>OR current snapshot</p></td>
+<td><p>
+<a href="http://sourceforge.net/projects/gretl/files/snapshots/gretl_install.exe/download">gretl_install.exe</a>
+</p></td>
+<td><p>
+<a href="http://sourceforge.net/projects/gretl/files/snapshots/gretl_install-64.exe/download">gretl_install-64.exe</a>
+</p></td>
+<td>&nbsp;</td>
+<td><p>
+<a href="http://sourceforge.net/projects/gretl/files/snapshots/gretl-win32.zip/download">gretl-win32.zip</a>
+</p></td>
+</tr>
+</table>
+
+<p>The executables were cross-compiled under GNU/Linux using <a
+href="http://www.mingw.org/">mingw32</a> and <a
+href="http://www.gtk.org/download/win32.php">GTK for
+Windows</a> (thanks Tor Lillqvist!). The free installer program is courtesy of <a
+href="http://www.jrsoftware.org/">Jordan Russell</a>.</p>
+
+<h2>Optional extras you may wish to install</h2>
+
+<center>
+<table cellpadding="4">
+
+<tr>
+<td><p>X-13-ARIMA-SEATS (seasonal adjustment, ARIMA models)</p></td>
+<td><p><a
+href="http://sourceforge.net/projects/gretl/files/x13as/x13as_install.exe/download">x13as_install.exe</a>
+OR (64-bit)
+<a
+href="http://sourceforge.net/projects/gretl/files/x13as/x13as_install-64.exe/download">x13as_install-64.exe</a>
+</p></td>
+</tr>
+
+<tr>
+<td><p>X-12-ARIMA (older version of the above)</p></td>
+<td><p><a
+href="http://sourceforge.net/projects/gretl/files/x12a/x12a_install.exe/download">x12a_install.exe</a></p></td>
+</tr>
+
+<tr>
+<td><p>TRAMO/SEATS (seasonal adjustment, ARIMA models)</p></td>
+<td><p><a 
+href="http://sourceforge.net/projects/gretl/files/tramo/ts_install.exe/download">ts_install.exe</a></p></td>
+</tr>
+
+<tr>
+ <td><p>Datasets for Wooldridge, 
+ <a href="http://www.swlearning.com/economics/wooldridge/wooldridge2e/wooldridge2e.html"><i>Introductory
+  Econometrics</i></a></p>
+ </td>
+ <td><p><a 
+   href="http://sourceforge.net/projects/gretl/files/datafiles/wooldridge_data.exe/download">wooldridge_data.exe</a></p>
+ </td>
+</tr>
+
+<tr>
+ <td><p>Datasets for Gujarati,
+  <a href="http://www.mhhe.com/economics/gujarati4/"><i>Basic Econometrics</i></a></p>
+ </td>
+ <td><p><a 
+   href="http://sourceforge.net/projects/gretl/files/datafiles/gujarati_data.exe/download">gujarati_data.exe</a></p>
+ </td>
+</tr>
+
+<tr>
+ <td><p>Datasets + scripts for Stock and Watson,
+  <a href="http://wps.aw.com/aw_stockwatsn_economtrcs_1"><i>Introduction to Econometrics</i></a></p>
+ </td>
+ <td><p><a 
+   href="http://sourceforge.net/projects/gretl/files/datafiles/stock_watson.exe/download">stock_watson.exe</a>,
+   <a href="http://sourceforge.net/projects/gretl/files/datafiles/stock_watson_2.exe/download">stock_watson_2.exe</a>
+   </p>
+ </td>
+</tr>
+
+<tr>
+ <td><p>Datasets + scripts for Hill, Griffiths and Lim,
+  <a href="http://www.principlesofeconometrics.com/"><i>Principles of Econometrics</i></a></p>
+ </td>
+ <td><p><a 
+   href="http://sourceforge.net/projects/gretl/files/datafiles/POE4data.exe/download">POE4data.exe</a>,
+   <a href="http://sourceforge.net/projects/gretl/files/datafiles/POE4scripts.exe/download">POE4scripts.exe</a>
+   </p>
+ </td>
+</tr>
+
+<tr>
+ <td><p>Datasets for Davidson and MacKinnon, 
+  <a href="http://www.econ.queensu.ca/ETM/"><i>Econometric Theory and Methods</i></a></p> 
+ </td>
+ <td><p><a 
+  href="http://sourceforge.net/projects/gretl/files/datafiles/ETM_data.exe/download">ETM_data.exe</a></p>
+ </td>
+</tr>
+
+<tr>
+ <td><p>Datasets for Marno Verbeek's 
+  <a href="http://www.econ.kuleuven.ac.be/gme/"><i>Guide to Modern Econometrics</i></a></p> 
+ </td>
+ <td><p><a 
+  href="http://sourceforge.net/projects/gretl/files/datafiles/verbeek_data.exe/download">verbeek_data.exe</a></p>
+ </td>
+</tr>
+
+</table>
+</center>
+
+<p>The above are all self-extracting installers.  You must install gretl before installing
+the extra items.</p>
+
+<h2><a name="old-windows">gretl for older systems</a></h2>
+
+<p>For older systems, 
+<a href="http://sourceforge.net/projects/gretl/files/gretl/1.9.3/gretl-1.9.3.exe/download">gretl 
+1.9.3</a> runs on Windows 2000 (and does not require SSE2), and 
+<a href="http://sourceforge.net/projects/gretl/files/gretl/1.6.5/gretl-1.6.5.exe/download">gretl 
+1.6.5</a> is the most recent version that will run on Windows 98.</p>
+
+<h2>Support for multiple languages</h2>
+
+<p>Besides English, gretl supports French, Italian, Spanish, German,
+Basque, Portuguese, Polish, Turkish, Czech, Albanian, Russian and Traditional Chinese.  
+Normally it shouldn't be necessary to do anything special to get gretl to appear in the 
+local language: the program comes with the full set of translations, and they should 
+be used automatically, based on the language setting of your computer.  In some
+circumstances, however, it may be necessary to adjust your language
+setting to achieve the expected effect.  This can be done
+in the Windows control panel.</p>
+
+<h2>Updating gretl</h2>
+
+<p>When updating an existing installation of gretl, it's a good
+idea to first run the uninstaller program
+<kbd>unins000.exe</kbd>, which you should find in the main gretl
+folder.  This will ensure that you don't get odd behavior due to
+"stale" DLLs or Windows registry settings.  Note that running the
+uninstaller will not touch any files you have created in the
+<kbd>gretl/user</kbd> folder, but it will erase any customizations
+you have made using the Preferences menu so you'll have to
+re-establish these when you start the new version of the program.</p>
+
+<h2>Running gretl over a network</h2>
+
+<p>There's a page of advice <a href="./gretl_network.html">here</a> 
+for anyone wanting to configure gretl for Windows to be run over a network, 
+as in a computer lab setting.</p>
+
+<h2>Building gretl for Windows</h2>
+
+<p>If you want to build gretl for Windows yourself, download the gretl
+source package (go <a
+href="http://sourceforge.net/projects/gretl/">here</a> to find the
+latest one) and take a look in the <kbd>win32</kbd> sub-directory.
+You will find there a Makefile for the Windows version: it is actually
+designed for cross-compiling gretl on Linux but it shouldn't be too
+hard to modify it for building on Windows, particularly if you're
+using the mingw32 compiler.</p>
+
+</body>
+</html>
+
+
+
+

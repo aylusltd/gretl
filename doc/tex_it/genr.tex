@@ -1,0 +1,896 @@
+\chapter{Funzioni speciali in genr}
+\label{chap-genr}
+
+\section{Introduzione}
+\label{genr-intro}
+
+Il comando \verb+genr+ offre un modo flessibile per definire nuove
+variabili. Il comando è documentato nella \GCR, mentre questo
+capitolo offre una discussione più approfondita di alcune delle
+funzioni speciali disponibili con \verb+genr+ e di alcune
+particolarità del comando.
+     
+\section{Varianza di lungo periodo}
+\label{sec:lrvar}
+
+Come è noto, la varianza della media di $T$ variabili aleatorie
+$x_1, x_2, \ldots, x_T$ con uguale varianza $\sigma^2$ è pari a
+$\sigma^2/T$ se i dati sono non correlati. In questo caso, la varianza
+campionaria di $x_t$ rappresenta uno stimatore consistente.
+
+Se però esiste correlazione seriale tra le $x_t$, la varianza di
+$\bar{X} = T^{-1} \sum_{t=1}^T x_t$ va stimata in modo diverso. Una delle
+statistiche più usate a questo scopo è uno stimatore kernel non parametrico con
+il kernel di Bartlett definito come
+\begin{equation}
+  \label{eq:scalar-lrvar}
+  \hat{\omega}^2(k) = T^{-1} \sum_{t=k}^{T-k} \left[ \sum_{i=-k}^k w_i (x_t -
+  \bar{X}) (x_{t-i} - \bar{X}) \right] ,
+\end{equation}
+dove l'intero $k$ è definito come l'ampiezza della finestra, mentre i termini
+$w_i$ sono i cosiddetti \emph{pesi di Bartlett}, definiti come $w_i = 1 -
+\frac{|i|}{k + 1}$. Si può dimostrare che, per $k$ abbastanza alto,
+$\hat{\omega}^2(k)/T$ rappresenta uno stimatore consistente alla varianza di
+$\bar{X}$.
+
+\app{Gretl} implementa questo stimatore usando la funzione \texttt{lrvar()}, che
+accetta due argomenti: la serie di cui si vuole stimare la varianza di lungo
+periodo e lo scalare $k$. Se $k$ è negativo, viene usato il diffuso valore $T^{1/3}$.
+
+\section{Filtri per serie storiche}
+\label{sec:filters}
+
+Un tipo di funzioni speciali di \verb+genr+ consente il filtraggio delle serie
+storiche. Oltre alle solite operazioni di ritardo e differenza, \app{gretl}
+fornisce anche la differenza frazionaria e due filtri usati spesso in
+macroeconomia per la scomposizione fra ciclo e trend: il filtro di
+Hodrick--Prescott e quello passa banda di Baxter--King.
+
+\subsection{Differenza frazionaria}
+\label{sec:fracdiff}
+
+Differenziare una serie storica per $d$ volte è un'operazione ovvia quando
+$d$ è un numero intero, ma può sembrare strana quando $d$ è una frazione.
+Tuttavia, questa idea ha un ben preciso fondamento matematico: si consideri la
+funzione
+\[
+  f(z) = (1 - z)^{-d},
+\]
+dove $z$ e $d$ sono numeri reali. L'espansione in serie di Taylor intorno a 
+$z=0$ mostra che
+\[
+  f(z) = 1 + dz + \frac{d (d+1)}{2} z^2 + \cdots 
+\]
+o, più sinteticamente,
+\[
+  f(z) = 1 + \sum_{i=1}^{\infty} \psi_i z^i
+\]
+con
+\[
+  \psi_k = \frac{\prod_{i=1}^{k} (d+i-1) }{k!} = \psi_{k-1} \frac{d+k-1}{k}
+\]
+
+La stessa espansione può essere usata con l'operatore ritardo, così che se
+definiamo
+\[
+  Y_t = (1-L)^{0.5} X_t
+\]
+potrebbe essere considerata equivalente a
+\[
+Y_t = X_t - 0.5 X_{t-1} - 0.125 X_{t-2} - 0.0625 X_{t-3} - \cdots 
+\]
+    
+In \app{gretl} questa trasformazione può essere eseguita con il comando
+\begin{code}
+genr Y = fracdiff(X,0.5)
+\end{code}
+    
+\subsection{Il filtro di Hodrick--Prescott}
+\label{sec:hodrick-prescott}
+
+Questo filtro è utilizzabile tramite la funzione \verb+hpfilt()+, che accetta un
+argomento: il nome della variabile da processare.
+
+Una serie storica $y_t$ può essere scomposta in un trend, o componente di
+crescita $g_t$ e in una componente ciclica $c_t$.  
+%
+\[
+y_t = g_t + c_t, \quad t = 1,2,\dots,T
+\]
+%
+Il filtro di Hodrick--Prescott effettua questa scomposizione, minimizzando
+l'espressione seguente:
+%
+\[
+    \sum_{t = 1}^T {(y_t - g_t )^2 } + \lambda \sum_{t = 2}^{T -
+      1} \left((g_{t+1} - g_t) - (g_t - g_{t - 1} )\right)^2 .
+\]
+%
+Il primo termine è la somma dei quadrati delle componenti cicliche $c_t =
+y_t - g_t$. Il secondo termine è un multiplo $\lambda$ della somma dei quadrati
+delle differenze seconde della componente di trend. Questo secondo termine
+penalizza le variazioni nel tasso di crescita della componente di trend:
+maggiore è il valore di $\lambda$, maggiore sarà la penalizzazione, e quindi più
+regolare sarà la serie di trend.
+
+Si noti che la funzione \cmd{hpfilt} in \app{gretl} produce la componente di
+ciclo, $c_t$, della serie originale. Se si vuole il trend depurato, basta
+sottrarre il ciclo dalla serie originale:
+
+\begin{code}
+genr ct = hpfilt(yt)
+genr gt = yt - ct
+\end{code}
+
+Hodrick e Prescott (1997) suggeriscono che un valore $\lambda = 1600$ sia
+ragionevole per dati trimestrali. Il valore predefinito in \app{gretl} è il
+quadrato della frequenza dei dati, moltiplicato per 100 (che dà appunto 1600 per
+dati trimestrali).  Il valore può essere modificato con il comando \cmd{set} sul
+parametro \cmd{hp\_lambda}.  Ad esempio, \cmd{set hp\_lambda 1200}.
+
+\subsection{Il filtro di Baxter e King}
+\label{sec:baxter-king}
+
+Questo filtro è utilizzabile tramite la funzione \verb+bkfilt()+; anche questa
+accetta come unico argomento il nome della variabile da processare.
+
+Si consideri la rappresentazione spettrale di una serie storica $y_t$:
+%	
+\[ y_t = \int_{-\pi}^{\pi} e^{i\omega} \mathrm{d} Z(\omega) \]
+%
+Per estrarre la componente di $y_t$ che si trova tra le frequenze
+$\underline{\omega}$ e $\overline{\omega}$ potremmo applicare un filtro passa
+banda:
+%	
+\[ c^*_t = \int_{-\pi}^{\pi} F^*(\omega) e^{i\omega} \mathrm{d}
+Z(\omega) \] 
+%
+dove $F^*(\omega) = 1$ per $\underline{\omega} < |\omega| <
+\overline{\omega}$ e 0 altrove. Ciò implicherebbe, nel dominio
+temporale, applicare alla serie un filtro con un numero infinito di
+coefficienti, cosa non desiderabile. Il filtro passa banda di Baxter e
+King applica a $y_t$ un polinomio finito nell'operatore di ritardo
+$A(L)$:
+%	
+\[ c_t = A(L) y_t \]
+%
+dove $A$($L$) è definito come
+%	
+\[ A(L) = \sum_{i=-k}^{k} a_i L^i \]
+
+I coefficienti $a_i$ sono scelti in modo che $F(\omega) =
+A(e^{i\omega})A(e^{-i\omega})$ sia la migliore approssimazione di
+$F^*(\omega)$ per un dato $k$. Chiaramente, maggiore è $k$, migliore è
+l'approssimazione, ma poiché ciò implica scartare $2k$ osservazioni, di
+solito si cerca un compromesso.  Inoltre, il filtro ha altre proprietà
+teoriche interessanti, tra cui quella che $a(1) = 0$, quindi una serie
+con una sola radice unitaria è resa stazionaria dall'applicazione del
+filtro.
+
+In pratica, il filtro è usato di solito con dati mensili o trimestrali
+per estrarne la componente di ``ciclo economico'', ossia la componente
+tra 6 e 36 trimestri. I valori usuali per $k$ sono 8 o 12 (o forse di
+più per serie mensili).  I valori predefiniti per i limiti di
+frequenza sono 8 e 32, mentre il valore predefinito per l'ordine di
+approssimazione, $k$, è 8.  È possibile impostare questi valori usando
+il comando \cmd{set}.  La parola chiave per impostare i limiti di
+frequenza è \verb+bkbp_limits+, mentre quella per $k$ è \verb+bkbp_k+.
+Quindi ad esempio, se si stanno usando dati mensili e si vuole
+impostare i limiti di frequenza tra 18 e 96, e $k$ a 24, si può
+eseguire
+
+\begin{code}
+set bkbp_limits 18 96
+set bkbp_k 24
+\end{code}
+
+Questi valori resteranno in vigore per le chiamate alla funzione
+\verb+bkfilt+ finché non saranno modificati da un altro uso di
+\verb+set+.
+
+\section{Dati panel}
+\label{panel-genr}
+
+\subsection{Variabili dummy}
+\label{dummies}
+
+In uno studio panel, può nascere l'esigenza di costruire delle
+variabili dummy di uno dei seguenti tipi: (a) dummy che identificano
+ciascuna delle unità cross-section, o (b) dummy che identificano
+ciascuno dei periodi. Il primo tipo può essere usato per
+permettere all'intercetta della regressione di variare tra le unità
+cross-section, il secondo per permettere all'intercetta di variare tra
+i periodi.
+
+Per creare questo tipo di dummy, è possibile usare le due funzioni
+speciali del menù \textsf{Aggiungi}, o del comando testuale \cmd{genr}.
+
+\begin{enumerate}
+\item ``Dummy per unità'' (comando testuale \cmd{genr unitdum}).
+  Questo comando crea un insieme di variabili dummy che identificano
+  le unità cross section.  La variabile \verb+du_1+ avrà valore 1 in
+  ogni riga dei dati che corrisponde a un'osservazione della prima
+  unità cross section, e 0 altrove; \verb+du_2+ avrà valore 1 in ogni
+  riga dei dati che corrisponde a un'osservazione della seconda unità
+  cross section, e così via.
+        
+\item ``Dummy temporali'' (comando testuale \cmd{genr timedum}).
+  Questo comando crea un insieme di variabili dummy che identificano
+  i periodi.  La variabile \verb+dt_1+ avrà valore 1 in ogni riga dei dati che
+  corrisponde a un'osservazione del primo periodo, e 0 altrove; \verb+dt_2+ avrà
+  valore 1 in ogni riga dei dati che corrisponde a un'osservazione del secondo
+  periodo, e così via.
+
+\end{enumerate}
+
+Se un dataset panel contiene l'anno di ogni osservazione all'interno
+della variabile \verb+ANNO+, è possibile creare una dummy periodica
+per un anno particolare, ad esempio con \cmd{genr dum = (ANNO=1960)}.
+È anche possibile creare variabili dummy periodiche usando l'operatore
+modulo, \verb+%+.  Ad esempio, per creare una dummy che
+valga 1 ogni trenta osservazioni a partire dalla prima e 0 altrove,
+basta eseguire
+%
+\begin{code}
+genr index 
+genr dum = ((index-1)%30) = 0
+\end{code}
+
+
+
+\subsection{Ritardi, differenze, trend}
+\label{panel-lagged}
+
+Se i periodi temporali sono distanziati in modo uniforme, è possibile
+usare valori ritardati delle variabili in una regressione panel (ma si
+veda la sezione~\ref{panel-dyn}; è anche possibile costruire
+differenze prime delle variabili.
+
+Se un dataset è identificato correttamente come panel,  \app{gretl}
+gestirà correttamente la generazione di questo tipo di variabili. Ad
+esempio, il comando \verb+genr x1_1 = x1(-1)+ creerà una variabile che
+contiene il primo ritardo di \verb+x1+, laddove è disponibile, e il
+codice di valore mancante, laddove il ritardo non è disponibile (ad esempio
+nella prima osservazione per ogni gruppo).  Quando si esegue una regressione che
+include questo tipo di variabili, il programma escluderà automaticamente le
+osservazioni mancanti.
+
+Quando un dataset panel ha una dimensione temporale sostanziale, può essere
+utile includere un trend nell'analisi. Il comando \cmd{genr time} 
+crea una variabile di nome \varname{time} che assume valori compresi tra 1 e $T$
+per ogni unità, dove $T$ è la lunghezza della dimensione temporale del panel.
+Per creare un indice che assuma valori compresi tra 1 e $m\times T$, dove $m$
+è il numero di unità nel panel, si usi invece \cmd{genr index}.
+
+\subsection{Statistiche descrittive per unità}
+\label{panel-stats}
+
+Le funzioni \texttt{pmean()} e \texttt{psd()} possono essere usate per generare
+semplici statistiche descrittive (media e scarto quadratico medio) per una data
+variabile, calcolate per gruppo.
+
+Supponendo di avere un dataset panel che comprende 8 osservazioni temporali per
+ciascuna di $N$ unità o gruppi. Il comando
+%
+\begin{code}
+genr pmx = pmean(x)
+\end{code}
+%
+crea una serie di questo tipo: i primi 8 valori (che corrispondono all'unità 1)
+contengono la media di \varname{x} per l'unità 1, i successivi 8 valori
+contengono la media per l'unità 2 e così via. La funzione \texttt{psd()}
+funziona in modo simile. Lo scarto quadratico medio campionario per il gruppo
+$i$ è calcolato come
+\[
+s_i = \sqrt{\frac{\sum(x-\bar{x}_i)^2}{T_i-1}}
+\]
+dove $T_i$ denota il numero di osservazioni valide su \varname{x}
+per l'unità data, $\bar{x}_i$ denota la media di gruppo, e la somma viene fatta
+su tutte le osservazioni valide per il gruppo. Se però vale $T_i < 2$,
+lo scarto quadratico medio viene impostato pari a 0.
+
+È interessante notare un uso particolare di \texttt{psd()}: se si vuole formare
+un sotto-campione di un panel che contenga solo quelle unità per cui la
+variabile \varname{x} varia nel tempo, si può eseguire
+%
+\begin{code}
+smpl (psd(x) > 0) --restrict
+\end{code}
+
+\subsection{Funzioni speciali per manipolare i dati}
+\label{panel-manip}
+
+Oltre alle funzioni discusse sopra, ci sono alcune opzioni di \texttt{genr}
+particolarmente utili per manipolare i dati panel, soprattutto quando i dati
+sono stati importati da una fonte esterna e non sono nella forma corretta per
+l'analisi panel. Queste funzionalità sono spiegate nel Capitolo~\ref{datafiles}.
+
+
+\section{Ricampionamento e bootstrapping}
+\label{sec:genr-resample}
+
+Un'altra funzione particolare è il ricampionamento, con reimmissione,
+di una serie. Data una serie di dati originale \varname{x}, il comando
+%
+\begin{code}
+genr xr = resample(x)
+\end{code}
+%
+crea una nuova serie in cui ognuno degli elementi è estratto in modo casuale
+dagli elementi di \varname{x}. Se la serie originale ha 100 osservazioni, ogni
+elemento di \varname{x} è scelto con probabilità $1/100$ ad ogni estrazione.
+L'effetto è quindi di ``rimescolare'' gli elementi di \varname{x}, con la
+particolarità che ogni elemento di \varname{x} può apparire più di una volta, o
+non apparire affatto, in \varname{xr}.
+
+L'uso principale di questa funzione è la costruzione di intervalli di confidenza
+o p-value con il metodo bootstrap. Ecco un semplice esempio: si supponga di aver
+stimato una semplice regressione OLS di $y$ su $x$ e di aver trovato che il
+coefficiente della pendenza abbia un rapporto $t$ pari a 2.5 con 40 gradi di
+libertà.  Il p-value a due code per l'ipotesi nulla che il parametro della
+pendenza sia pari a zero vale quindi 0.0166, usando la distribuzione $t(40)$. A
+seconda del contesto, però, potremmo dubitare del fatto che il rapporto tra il
+coefficiente e l'errore standard segua veramente una distribuzione $t(40)$. In
+questo caso, potremmo derivare un valore bootstrap per il p-value come mostrato
+nell'esempio~\ref{resampling-loop}.  
+
+Sotto l'ipotesi nulla che la pendenza rispetto a $x$ sia pari a zero,
+$y$ è uguale alla sua media più un termine di errore. Simuliamo $y$
+ricampionando i residui del modello OLS iniziale e ri-stimiamo il modello.
+Ripetiamo questa procedura un gran numero di volte e registriamo il numero di
+casi in cui il valore assoluto del rapporto $t$ è maggiore di 2.5: la
+proporzione di questo numero di casi è il nostro valore bootstrap per il
+p-value. Per una buona discussione dei test basati sulla simulazione e sui
+metodi bootstrap, si veda Davidson e MacKinnon (2004, capitolo 4).
+
+\begin{script}[htbp]
+  \caption{Calcolo del p-value col metodo bootstrap}
+  \label{resampling-loop}
+\begin{scode}
+ols y 0 x
+# salva i residui
+genr ui = $uhat
+scalar ybar = mean(y)
+# numero delle replicazioni per il bootstrap
+scalar replics = 10000
+scalar tcount = 0
+series ysim = 0
+loop replics --quiet
+  # genera i valori simulati di y ricampionando
+  ysim = ybar + resample(ui)
+  ols ysim 0 x
+  scalar tsim = abs($coeff(x) / $stderr(x))
+  tcount += (tsim > 2.5)
+endloop      
+printf "Proporzione dei casi con |t| > 2.5 = %g\n", tcount / replics
+\end{scode}
+%$
+\end{script}
+   
+
+\section{Densità cumulate e p-value}
+\label{sec:genr-cdf}
+
+Le due funzioni \cmd{cdf} e \cmd{pvalue} forniscono strumenti complementari per
+esaminare i valori di varie distribuzioni di probabilità: la normale standard,
+la $t$ di Student, la $\chi^2$, la $F$, la gamma, e la binomiale.
+La sintassi di queste funzioni è spiegata nella \GCR; in questa sede viene
+presentato un aspetto particolare riguardante la precisione dei risultati.
+
+La funzione di ripartizione, o di densità cumulata (CDF), per una variabile
+casuale è l'integrale della densità della variabile, dal suo limite inferiore
+(tipicamente $-\infty$ o 0) fino a un certo valore $x$. Il p-value (almeno il
+p-value destro, a una coda, fornito dalla funzione \cmd{pvalue}) è la
+probabilità complementare, l'integrale da $x$ al limite superiore della
+distribuzione, tipicamente $+\infty$.  
+
+In linea di principio non c'è bisogno di due funzioni distinte: dato un valore
+della funzione di ripartizione $p_0$ è possibile ricavare facilmente il p-value
+come $1-p_0$ (o viceversa).  In pratica, poiché il computer usa aritmetica a
+precisione finita, due funzioni non sono ridondanti. In \app{gretl}, come nella
+maggior parte dei programmi statistici, i numeri a virgola mobile sono
+rappresentati tramite dei ``double'' --- valori a precisione doppia, che sono
+tipicamente memorizzati in 8 byte, o 64 bit. Visto che il numero di bit
+disponibili è fisso, i numeri in virgola mobile che possono essere rappresentati
+sono limitati: \textit{i ``double'' non modellano esattamente la retta reale}.
+Tipicamente, i ``double'' possono rappresentare numeri che stanno all'incirca
+nell'intervallo $\pm 1.7977 \times 10^{308}$, ma con circa solo 15 cifre di
+precisione.
+
+Supponiamo di essere interessati alla coda sinistra della distribuzione $\chi^2$
+con 50 gradi di libertà, ossia di voler conoscere il valore della CDF per $x =
+0.9$.  Vediamo la seguente sessione interattiva:
+\begin{code}
+? genr p1 = cdf(X, 50, 0.9)
+Generato lo scalare p1 (ID 2) = 8.94977e-35
+? genr p2 = pvalue(X, 50, 0.9)
+Generato lo scalare p2 (ID 3) = 1
+? genr test = 1 - p2
+Generato lo scalare test (ID 4) = 0
+\end{code}
+
+La funzione \cmd{cdf} ha prodotto un valore accurato, ma la funzione
+\cmd{pvalue} ha dato come risultato 1, da cui non è possibile ricavare il valore
+della CDF. Questo può sembrare sorprendente, ma si spiega considerando che se il
+valore di \texttt{p1} è corretto, il valore corretto di \texttt{p2} è $1 -
+8.94977 \times 10^{-35}$, ma non c'è modo di rappresentare questo valore con un
+``double'': richiederebbe oltre 30 cifre di precisione.
+
+Ovviamente questo è un esempio estremo. Se il valore di $x$ in questione non si
+trova alle estremità di una delle due code della distribuzione, le funzioni
+\cmd{cdf} e \cmd{pvalue} produrranno risultati complementari, come si vede da
+questo esempio:
+\begin{code}
+? genr p1 = cdf(X, 50, 30)
+Generato lo scalare p1 (ID 2) = 0.0111648
+? genr p2 = pvalue(X, 50, 30)
+Generato lo scalare p2 (ID 3) = 0.988835
+? genr test = 1 - p2
+Generato lo scalare test (ID 4) = 0.0111648
+\end{code}
+La morale è che se occorre esaminare valori estremi, occorre scegliere
+attentamente la funzione da usare, tenendo presente che valori molto vicini allo
+zero possono essere rappresentati con ``double'', mentre valori molto vicini a 1
+possono non esserlo.
+
+\section{Gestione dei valori mancanti}
+\label{sec:genr-missing}
+
+Sono disponibili quattro funzioni speciali per gestire i valori
+mancanti.  La funzione booleana \verb+missing()+ richiede come unico
+argomento il nome di una variabile e produce una serie con valore 1
+per ogni osservazione in cui la variabile indicata ha un valore
+mancante, 0 altrove (ossia dove la variabile indicata ha un valore
+valido). La funzione \verb+ok()+ è il complemento di \verb+missing+,
+ossia una scorciatoia per \verb+!missing+ (dove \verb+!+ è l'operatore
+booleano NOT).  Ad esempio, è possibile contare i valori mancanti
+della variabile \verb+x+ usando
+
+\begin{code}
+genr nmanc_x = sum(missing(x))
+\end{code}
+
+La funzione \verb+zeromiss()+, che richiede anch'essa come unico
+argomento il nome di una serie, produce una serie in cui tutti i
+valori zero sono trasformati in valori mancanti. Occorre usarla con
+attenzione (di solito non bisogna confondere valori mancanti col
+valore zero), ma può essere utile in alcuni casi: ad esempio, è
+possibile determinare la prima osservazione valida di una variabile
+\verb+x+ usando
+
+\begin{code}
+genr time
+genr x0 = min(zeromiss(time * ok(x)))
+\end{code}
+
+
+La funzione \verb+misszero()+ compie l'operazione opposta di
+\verb+zeromiss+, ossia converte tutti i valori mancanti in zero.  
+
+Può essere utile chiarire la propagazione dei valori mancanti
+all'interno delle formule di \verb+genr+. La regola generale è che
+nelle operazioni aritmetiche che coinvolgono due variabili, se una
+delle variabili ha un valore mancante in corrispondenza
+dell'osservazione $t$, anche la serie risultante avrà un valore
+mancante in $t$. L'unica eccezione a questa regola è la
+moltiplicazione per zero: zero moltiplicato per un valore mancante
+produce sempre zero (visto che matematicamente il risultato è zero a
+prescindere dal valore dell'altro fattore).
+    
+
+\section{Recupero di variabili interne}
+\label{sec:genr-internal}
+
+Il comando \verb+genr+ fornisce un modo per recuperare vari valori
+calcolati dal programma nel corso della stima dei modelli o della
+verifica di ipotesi. Le variabili che possono essere richiamate in
+questo modo sono elencate nella \GCR; qui ci occupiamo in particolare
+delle variabili speciali \verb+$test+ e \verb+$pvalue+.
+
+Queste variabili contengono, rispettivamente, il valore dell'ultima
+statistica test calcolata durante l'ultimo uso esplicito di un comando
+di test e il p-value per quella statistica test. Se non è stato
+eseguito alcun comando di test, le variabili contengono il codice di
+valore mancante. I ``comandi espliciti di test'' che funzionano in
+questo modo sono i seguenti: \cmd{add} (test congiunto per la
+significatività di variabili aggiunte a un modello); \cmd{adf} (test
+di Dickey--Fuller aumentato, si veda oltre); \cmd{arch} (test per
+ARCH); \cmd{chow} (test Chow per break strutturale); \cmd{coeffsum}
+(test per la somma dei coefficienti specificati); \cmd{cusum}
+(statistica \emph{t} di Harvey--Collier); \cmd{kpss} (test di
+stazionarietà KPSS, p-value non disponibile); \cmd{lmtest} (si veda
+oltre); \cmd{meantest} (test per la differenza delle medie);
+\cmd{omit} (test congiunto per la significatività delle variabili
+omesse da un modello); \cmd{reset} (test RESET di Ramsey);
+\cmd{restrict} (vincolo lineare generale); \cmd{runs} (test delle
+successioni per la casualità); \cmd{testuhat} (test per la normalità
+dei residui) e \cmd{vartest} (test per la differenza delle varianze).
+Nella maggior parte dei casi, vengono salvati valori sia in
+\verb+$test+ che in \verb+$pvalue+; l'eccezione è il test KPSS, per
+cui non è disponibile il p-value.
+    
+Un punto da tenere in considerazione a questo proposito è che le
+variabili interne \verb+$test+ e \verb+$pvalue+ vengono sovrascritte
+ogni volta che viene eseguito uno dei test elencati sopra. Se si
+intende referenziare questi valori durante una sequenza di comandi
+\app{gretl}, occorre farlo nel momento giusto.
+    
+Un'altra questione è data dal fatto che alcuni dei comandi di test di
+solito generano più di una statistica test e più di un p-value: in questi casi
+vengono salvati solo gli ultimi valori. Per controllare in modo
+preciso quali valori vengono recuperati da \verb+$test+ e
+\verb+$pvalue+ occorre formulare il comando di test in modo che il
+risultato non sia ambiguo. Questa nota vale in particolare per i
+comandi \verb+adf+ e \verb+lmtest+.
+
+\begin{itemize}
+\item Di solito, il comando \cmd{adf} genera tre varianti del test
+  Dickey--Fuller: una basata su una regressione che include una
+  costante, una che include costante e trend lineare, e una che
+  include costante e trend quadratico. Se si intende estrarre valori
+  da \verb+$test+ o \verb+$pvalue+ dopo aver usato questo comando, è
+  possibile selezionare la variante per cui verranno salvati i valori,
+  usando una delle opzioni \verb+--nc+, \verb+--c+, \verb+--ct+ o
+  \verb+--ctt+ con il comando \verb+adf+.
+\item Di solito, il comando \cmd{lmtest} (che deve seguire una
+  regressione OLS) esegue vari test diagnostici sulla regressione in
+  questione. Per controllare cosa viene salvato in \verb+$test+ e
+  \verb+$pvalue+ occorre limitare il test usando una delle opzioni
+  \verb+--logs+, \verb+--autocorr+, \verb+--squares+ 
+  o \verb+--white+.
+\end{itemize}
+
+Un aspetto comodo per l'uso dei valori immagazzinati in \verb+$test+ e
+\verb+$pvalue+ è dato dal fatto che il tipo di test a cui si
+riferiscono questi valori viene scritto nell'etichetta descrittiva
+della variabile generata. Per controllare di aver recuperato il valore
+corretto, è possibile leggere l'etichetta con il comando \cmd{label}
+(il cui unico argomento è il nome della variabile). La seguente
+sessione interattiva illustra la procedura.
+    
+\begin{code}
+? adf 4 x1 --c
+Test Dickey-Fuller aumentati, ordine 4, per x1
+ampiezza campionaria 59
+ipotesi nulla di radice unitaria: a = 1
+  test con costante
+  modello: (1 - L)y = b0 + (a-1)*y(-1) + ... + e
+  valore stimato di (a - 1): -0.216889
+  statistica test: t = -1.83491
+  p-value asintotico 0.3638
+P-value basati su MacKinnon (JAE, 1996)
+? genr pv = $pvalue
+Generato lo scalare pv (ID 13) = 0.363844
+? label pv    
+  pv=Dickey-Fuller pvalue (scalar)
+\end{code}
+%$
+
+\section{Procedure numeriche}
+\label{sec:genr-numerical}
+
+Esistono due funzioni particolarmente utili per costruire stimatori speciali,
+ossia \texttt{BFGSmax} (il massimizzatore BFGS, discusso nel Capitolo~\ref{chap:mle})
+e \texttt{fdjac}, che produce un'approssimazione del Jacobiano calcolata col
+metodo della differenza finita in avanti.
+
+\subsection{Il massimizzatore BFGS}
+\label{sec:BFGSmax}
+
+La funzione \texttt{BFGSmax} accetta due argomenti: un vettore che contiene i
+valori iniziali di un insieme di parametri, e una stringa che specifica una
+chiamata a una funzione che calcola il criterio (scalare) da massimizzare, dati
+i valori attuali dei parametri e gli altri dati rilevanti.
+Se si tratta di una minimizzazione, questa funzione dovrebbe produrre il
+criterio con segno negativo. In caso di successo, \texttt{BFGSmax}
+produce il valore massimo del criterio e la matrice indicata come primo
+argomento contiene i valori dei parametri che producono il massimo. Ecco un
+esempio:
+%
+\begin{code}
+matrix X = { dataset }
+matrix theta = { 1, 100 }'
+scalar J = BFGSmax(theta, "Funzione(&theta, &X)")
+\end{code}
+%
+Si assume che \texttt{Funzione} sia una funzione definita dall'utente
+(si veda il Capitolo~\ref{chap:functions}) con una struttura di questo tipo:
+%
+\begin{code}
+function Funzione (matrix *theta, matrix *X)
+  scalar val = ...  # Esegue dei calcoli
+  return scalar val
+end function
+\end{code}
+
+\begin{script}[htbp]
+  \caption{Ricerca del minimo della funzione di Rosenbrock}
+  \label{rosenbrock}
+\begin{scode}
+function Rosenbrock(matrix *param)
+  scalar x = param[1]
+  scalar y = param[2]
+  scalar f = -(1-x)^2 - 100 * (y - x^2)^2
+  return scalar f 
+end function
+
+nulldata 10
+
+matrix theta = { 0 , 0 }
+
+set max_verbose 1
+M = BFGSmax(theta, "Rosenbrock(&theta)")
+
+print theta
+\end{scode}
+\end{script}
+
+Il funzionamento del massimizzatore BFGS può essere regolato usando il comando
+\texttt{set} sulle variabili \verb+bfgs_maxiter+ e \verb+bfgs_toler+ (si veda
+il Capitolo~\ref{chap:mle}). Inoltre, è possibile vedere i dettagli della
+massimizzazione assegnando un valore positivo alla variabile
+\verb|max_verbose|, sempre con il comando \texttt{set}.
+
+Spesso, per testare gli algoritmi di ottimizzazione si usa la funzione di
+Rosenbrock, chiamata anche ``valle di Rosenbrock'' o la ``funzione a banana di
+Rosenbrock'', visto che le linee di contorno sono a forma di banana. Questa è
+definita come:
+%
+\[
+    f(x,y) = (1 - x)^2 + 100(y - x^2)^2
+\]
+%
+La funzione ha un minimo globale in $(x,y) = (1,1)$ dove vale $f(x,y) = 0$.
+L'Esempio~\ref{rosenbrock} mostra uno script di \app{gretl} che cerca il minimo
+usando la funzione \texttt{BFGSmax} (mostrando i dettagli sul progresso del
+calcolo).
+
+\subsection{Calcolo di un Jacobiano}
+\label{sec:fdjac}
+
+\app{Gretl} offre la possibilità di differenziare numericamente una funzione
+definita dall'utente, usando la funzione \texttt{fdjac}.
+
+Questa funzione accetta due argomenti: una matrice $n \times 1$
+che contiene i valori iniziali dei parametri e una stringa che specifica una
+chiamata a una funzione che calcola e produce una matrice $m \times 1$,
+dati i valori attuali dei parametri e gli altri dati rilevanti.
+In caso di successo, viene prodotta una matrice $m \times n$ che contiene il
+Jacobiano. Ad esempio,
+%
+\begin{code}
+matrix Jac = fdjac(theta, "Somma(&theta, &X)")
+\end{code}
+dove si assume che \texttt{Somma} sia una funzione definita dall'utente con la
+struttura seguente:
+%
+\begin{code}
+function Somma (matrix *theta, matrix *X)
+  matrix V = ...  # Esegue dei calcoli
+  return matrix V
+end function
+\end{code}
+
+Questo può rivelarsi utile in vari casi: ad esempio, se si usa
+\texttt{BFGSmax} per stimare un modello, si potrebbe voler calcolare
+un'approssimazione numerica al Jacobiano rilevante per costruire una matrice di
+covarianza per le stime.
+
+Un altro esempio è rappresentato dal metodo delta: se si ha uno stimatore
+consistente di un vettore di parametri $\hat{\theta}$ e una stima consistente
+della sua matrice di covarianza $\Sigma$, potrebbe essere necessario calcolare
+stime di una trasformazione nonlineare continua $\psi = g(\theta)$. In questo caso,
+un risultato standard della teoria asintotica è il seguente:
+\[
+\left\{
+    \begin{array}{c}
+      \hat{\theta} \convp \theta \\ 
+      \sqrt{T} \left( \hat{\theta} - \theta \right) \convd N(0, \Sigma)
+    \end{array}
+\right\}
+    \Longrightarrow
+\left\{
+    \begin{array}{c}
+      \hat{\psi} = g(\hat{\theta}) \convp \psi = g(\theta) \\ 
+      \sqrt{T} \left( \hat{\psi} - \psi \right) \convd N(0, J
+      \Sigma J')
+    \end{array}
+\right\}
+\]
+dove $T$ è l'ampiezza del campione, mentre $J$ è il Jacobiano
+$\left.\pder{\psi}{\theta}\right|_{\theta = \hat{\theta}}$.
+
+\begin{script}[htbp]
+  \caption{Metodo delta}
+  \label{delta-method}
+\begin{scode}
+function MPC(matrix *param, matrix *Y)
+  beta = param[2]
+  gamma = param[3]
+  y = Y[1]
+  matrix ret = beta*gamma*y^(gamma-1)
+  return matrix ret
+end function
+
+# William Greene, Econometric Analysis, 5e, Chapter 9
+set echo off
+set messages off
+open greene5_1.gdt
+
+# Usa OLS per inizializzare i parametri
+ols realcons 0 realdpi --quiet
+genr a = $coeff(0)
+genr b = $coeff(realdpi)
+genr g = 1.0
+
+# Esegui NLS con derivate analitiche
+nls realcons = a + b * (realdpi^g)
+  deriv a = 1
+  deriv b = realdpi^g
+  deriv g = b * realdpi^g * log(realdpi)
+end nls
+
+matrix Y = realdpi[2000:4]
+matrix theta = $coeff
+matrix V = $vcv
+
+mpc = MPC(&theta, &Y)
+matrix Jac = fdjac(theta, "MPC(&theta, &Y)")
+Sigma = qform(Jac, V)
+
+printf "\nmpc = %g, std.err = %g\n", mpc, sqrt(Sigma)
+scalar teststat = (mpc-1)/sqrt(Sigma)
+printf "\nTest per MPC = 1: %g (p-value = %g)\n", \
+	teststat, pvalue(n,abs(teststat))
+\end{scode}
+\end{script}
+
+Lo script \ref{delta-method} esemplifica questo caso: è tratto da Greene (2003),
+sezione 9.3.1. Le leggere differenze tra i risultati riportati nel testo
+originale e quelli prodotti da \app{gretl} sono dovuti al fatto che il Jacobiano
+è calcolato numericamente, invece che analiticamente come nel testo.
+
+\section{La trasformata discreta di Fourier}
+\label{sec:genr-fft}
+
+La trasformata discreta di Fourier è una trasformazione lineare invertibile
+di un vettore complesso. Quindi, se $\mathbf{x}$ è un vettore
+$n$-dimensionale il cui $k$-esimo elemento è $x_k = a_k + i b_k$, il risultato
+della trasformata discreta di Fourier è un vettore
+$\mathbf{f} = \mathcal{F}(\mathbf{x})$ il cui $k$-esimo elemento è
+\[
+  f_k = \sum_{j=0}^{n-1} e^{-i \omega_{j,k} } x_j 
+\]
+dove $\omega_{j,k} = 2 \pi i \frac{j k}{n}$. Poiché la trasformazione
+è invertibile, il vettore $\mathbf{x}$ può essere ricavato da
+$\mathbf{f}$ usando la cosidetta trasformata inversa
+\[
+  x_k = \frac{1}{n} \sum_{j=0}^{n-1} e^{i \omega_{j,k} } f_j .
+\]
+
+La trasformata di Fourier è usata in varie situazioni, grazie a questa sua
+proprietà fondamentale: la convoluzione di due vettori può essere calcolata in
+modo efficiente moltiplicando gli elementi delle loro trasformate di Fourier e
+invertendo il risultato. Se
+\[
+  z_k = \sum_{j=1}^n x_j y_{k-j} ,
+\]
+allora vale
+\[
+  \mathcal{F}(\mathbf{z}) = \mathcal{F}(\mathbf{x}) \odot
+  \mathcal{F}(\mathbf{y}) .
+\]
+Ossia, $\mathcal{F}(\mathbf{z})_k = \mathcal{F}(\mathbf{x})_k
+\mathcal{F}(\mathbf{y})_k$.
+
+Per calcolare la trasformata di Fourier, \app{gretl} usa la libreria esterna
+\texttt{fftw3} (si veda Frigo e Johnson 2003), che garantisce velocità e
+accuratezza estreme. Infatti il tempo di processore necessario a compiere la
+trasformazione è $O(n \log n)$ per ogni $n$. Ecco perché l'insieme di tecniche
+numeriche impiegate in \texttt{fftw3} è chiamato comunemente Trasformata
+\emph{Veloce} di Fourier.
+
+\app{Gretl} fornisce due funzioni matriciali\footnote{Si veda il capitolo
+  \ref{chap:matrices}.} per calcolare la trasformata di Fourier e la sua
+inversa: \texttt{fft} e   \texttt{ffti}. In realtà l'implementazione della
+trasformata di Fourier di \app{gretl} è un po' più specializzata: il valore di
+ingresso della funzione \texttt{fft} deve essere reale. Al contrario,
+\texttt{ffti} richiede un argomento complesso e produce un risultato reale. Ad
+esempio:
+\begin{code}
+x1 = { 1 ; 2 ; 3 }
+# Esegue la trasformazione
+f = fft(a)
+# Esegue la trasformazione inversa
+x2 = ffti(f)
+\end{code}
+produce
+\[
+  x_1 = \left[ \begin{array}{c} 1 \\ 2 \\ 3 \end{array} \right] 
+  \qquad
+  f = \left[ \begin{array}{rr} 
+      6 & 0 \\ -1.5 & 0.866 \\ -1.5 & -0.866 
+   \end{array} \right] 
+  \qquad
+  x_2 = \left[ \begin{array}{c} 1 \\ 2 \\ 3 \end{array} \right] 
+\]
+dove la prima colonna di \emph{f} contiene la parte reale, mentre la seconda la
+parte complessa. In generale, se l'argomento di \texttt{fft} ha
+$n$ colonne, il risultato ne ha $2n$, dove le parti reali sono contenute
+nelle colonne dispari, mentre le parti complesse in quelle pari. Se fosse
+necessario calcolare la trasformata di Fourier su molti vettori con lo stesso
+numero di elementi, è numericamente più efficiente raggrupparli in una matrice,
+piuttosto che eseguire \texttt{fft} separatamente per ogni vettore.
+
+Ad esempio, si consideri la moltiplicazione di due polinomi:
+\begin{eqnarray*}
+  a(x) & = & 1 + 0.5 x \\
+  b(x) & = & 1 + 0.3 x - 0.8 x^2 \\
+  c(x) = a(x) \cdot b(x) & = & 1 + 0.8 x - 0.65 x^2 - 0.4 x^3
+\end{eqnarray*}
+I coefficienti del polinomio $c(x)$ sono la convoluzione dei coefficienti di
+$a(x)$ e $b(x)$; il seguente codice per \app{gretl} illustra come calcolare i
+coefficienti di $c(x)$:
+\begin{code}
+# Definizione dei due polinomi
+a = { 1, 0.5, 0, 0 }'
+b = { 1, 0.3, -0.8, 0 }'
+# Calcolo delle trasformate
+fa = fft(a)
+fb = fft(b)
+# Moltiplicazione complessa delle due trasformate
+fc = cmult(fa, fb)
+# Calcolo dei coefficienti di c usando la trasformata inversa
+c = ffti(fc)
+\end{code}
+
+L'efficienza massima si otterrebbe raggruppando \texttt{a} e
+\texttt{b} in una matrice. Il vantaggio computazionale nell'esempio appena visto
+è trascurabile, ma nel caso di un gran numero di righe o colonne, è preferibile
+procedere nel modo seguente:
+\begin{code}
+# Definizione dei due polinomi
+a = { 1 ; 0.5; 0 ; 0 }
+b = { 1 ; 0.3 ; -0.8 ; 0 }
+# Calcolo congiunto delle trasformate
+f = fft(a ~ b)
+# Moltiplicazione complessa delle due trasformate
+fc = cmult(f[,1:2], f[,3:4])
+# Calcolo dei coefficienti di c usando la trasformata inversa
+c = ffti(fc)
+\end{code}
+
+In econometria la trasformata di Fourier è usata per lo più nell'analisi delle
+serie storiche, ad esempio nel calcolo del periodogramma. Lo script
+\ref{scr:pergm-fft} mostra come calcolare il periodogramma di una serie storica
+usando la funzione \texttt{fft}.
+
+\begin{script}[htbp]
+  \caption{Periodogramma usando la trasformata di Fourier}
+  \label{scr:pergm-fft}
+\begin{scode}
+nulldata 50
+# Genera un processo AR(1)
+series e = normal()
+series x = 0
+x = 0.9*x(-1) + e
+# Calcola il periodogramma
+scale = 2*pi*$nobs
+X = { x }
+F = fft(X)
+S = sumr(F.^2)
+S = S[2:($nobs/2)+1]/scale
+omega = seq(1,($nobs/2))' .* (2*pi/$nobs)
+omega = omega ~ S
+# Confronto con il comando pergm
+pergm x  
+print omega
+\end{scode}
+\end{script}
+
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "gretl-guide-it"
+%%% End: 
+

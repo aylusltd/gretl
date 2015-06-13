@@ -1,0 +1,89 @@
+<equation-set latexopt="12pt" density="96x96" usepackage="mathptmx">
+<texequation fileref="adf1">
+\[(1-L)y_t=\beta_0+(\alpha-1)y_{t-1}+\epsilon_t\]
+</texequation>
+<texequation fileref="arlags">
+\[u_t = \rho_1u_{t-1} + \rho_3 u_{t-3} + \rho_4 u_{t-4} + e_t\]
+</texequation>
+<texequation fileref="arlags">
+\[u_t = \rho_1u_{t-1} + \rho_3 u_{t-3} + \rho_4 u_{t-4} + e_t\]
+</texequation>
+<texequation fileref="aic">
+\[\mbox{AIC}=-2\ell + 2k\]
+</texequation>
+<texequation fileref="ell">
+$\ell$
+</texequation>
+<texequation fileref="kernel1">
+\[f(x)=(1/nh) \sum_{t-1}^{n} k\left((x-x_t)/h\right)\]
+</texequation>
+<texequation fileref="kernel2">
+\[h=0.9 {\rm min}(s, {\rm IQR}/1.349) n^{1/5}\]
+</texequation>
+<texequation fileref="syssigma1">
+\[\hat{\sigma}_{i,j}=\frac{\hat{u}_i' \hat{u}_j}{T}\]
+</texequation>
+<texequation fileref="syssigma2">
+\[\hat{\sigma}_{i,j}=\frac{\hat{u}_i' \hat{u}_j}{\sqrt{(T-k_i)(T-k_j)}}\]
+</texequation>
+<texequation fileref="garch_h">
+\[h_t = \alpha_0 + \sum_{i=1}^q \alpha_i \varepsilon^2_{t-i} + \sum_{j=1}^p \beta_j h_{t-j}\]
+</texequation>
+<texequation fileref="garch_h">
+\[h_t = \alpha_0 + \sum_{i=1}^q \alpha_i \varepsilon^2_{t-i} + \sum_{j=1}^p \beta_i h_{t-j}\]
+</texequation>
+<texequation fileref="cumulate">
+$y_t = \sum_{\tau=1}^t x_{\tau}$
+</texequation>
+<texequation fileref="hurst">
+\[\mathrm{RS}(x) = an^H\]
+</texequation>
+<texequation fileref="">
+\[y^*_t = x_t \beta+\epsilon_t\]
+</texequation>
+<texequation fileref="">
+\[m_t \le y_t \le M_t\]
+</texequation>
+<texequation fileref="kalman1">
+\[y_t=H'\alpha_t\]
+</texequation>
+<texequation fileref="kalman2">
+\[\alpha_{t+1}=F \alpha_t + u_t\]
+</texequation>
+<texequation fileref="dffit">
+$\sqrt{h/(1 - h)}$
+</texequation>
+<texequation fileref="logistic1">
+\[\log\left(\frac{y}{y^*-y}\right)\]
+</texequation>
+<texequation fileref="logistic2">
+\[y=\frac{y^*}{1+e^{-x}}\]
+</texequation>
+<texequation fileref="mahal">
+\[\sqrt{(p-q)^{\prime}C^{-1}(p-q)}\]
+</texequation>
+<texequation fileref="greene_Cfunc">
+\[C = \alpha + \beta Y^{\gamma}\]
+</texequation>
+<texequation fileref="poisson1">
+\[\mathrm{Pr}(Y = y) = \frac{e^{-v} v^y}{y!}\]
+</texequation>
+<texequation fileref="poisson2">
+\[v = \mathrm{exp}(\beta_0+\beta_1 x_1+\beta_2 x_2 + \cdots)\]
+</texequation>
+<texequation fileref="nw1">
+$p = 0.75 \times T^{1/3}$
+</texequation>
+<texequation fileref="nw2">
+$p = 4 \times (T/100)^{2/9}$
+</texequation>
+<texequation fileref="structural">
+\[\Gamma y_t=Ay_{t-1}+Bx_t+\epsilon_t\]
+</texequation>
+<texequation fileref="vif">
+\[\frac{1}{1-R_j^2}\]
+</texequation>
+<texequation fileref="wlsr2">
+\[R^2 = 1 - \frac{\rm ESS}{\rm WTSS}\]
+</texequation>
+</equation-set>

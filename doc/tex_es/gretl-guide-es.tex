@@ -1,0 +1,134 @@
+\documentclass[oneside]{book}
+%% \usepackage[T1]{fontenc}
+\usepackage{url,verbatim,fancyvrb,appendix}
+\usepackage{pifont}
+\usepackage[latin1]{inputenc}
+\usepackage[pdftex]{graphicx}
+\usepackage{color,gretl}
+\usepackage[spanish]{babel}
+\usepackage[compat2,a4paper,hmargin=1.1in,top=.5in]{geometry}
+\usepackage[pdftex,hyperfootnotes=false]{hyperref}
+\usepackage{dcolumn,amsmath}
+
+\hypersetup{pdftitle={Manual de Gretl},
+            pdfsubject={GNU Regression, Econometrics and Time Series Library},
+            pdfauthor={Allin Cottrell},
+            colorlinks=true,
+            linkcolor=blue,
+            urlcolor=red,
+            bookmarksnumbered=true,
+            plainpages=false
+}
+
+\begin{document}
+
+\renewcommand{\scriptname}{Ejemplo}
+\renewcommand{\GCR}{\textit{Guía de instrucciones de Gretl}}
+\renewcommand{\GUG}{\textit{Guía del usuario de Gretl}}
+
+\VerbatimFootnotes
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{1ex}
+\setcounter{tocdepth}{1}
+
+%% titlepage
+
+\thispagestyle{empty}
+
+\begin{center}
+\pdfbookmark[1]{Guía del usuario}{titlepage}
+
+\gtitle{Guía del usuario de Gretl}
+
+\gsubtitle{Gnu Regression, Econometrics and Time-series}
+
+{\large \sffamily 
+Allin Cottrell\\
+Department of Economics\\
+Wake Forest university
+
+\vspace{20pt}
+Riccardo ``Jack'' Lucchetti\\
+Dipartimento di Economia\\
+Università di Ancona\\
+
+\vspace{20pt}
+November, 2005}
+
+
+\vspace{20pt}
+
+% {\large \sffamily 
+% Traducción al español: \\
+% %Parmeeta Bhogal \\
+% Ignacio Díaz-Emparanza \\
+% Marta Regúlez
+% }
+
+%% \vspace{20pt}
+%% {\large \sffamily Noviembre, 2005}
+
+\end{center}
+
+\clearpage
+
+%% end titlepage, begin license page
+
+\thispagestyle{empty}
+
+\pdfbookmark[1]{Licencia}{license}
+
+\vspace*{2in}
+
+Copyright \copyright\ 2001--2005 Allin Cottrell
+
+Copyright  de la traducción española: \copyright\ 2006 Ignacio Díaz-Emparanza -- Marta Regúlez (Basado en la traducción del manual de 2003 de Parmeeta Bhogal e Ignacio Díaz-Emparanza)
+
+Este documento puede ser copiado, distribuido y/o modificado bajo los
+términos de la \textit{GNU Free Documentation License}, Versión 1.1 o
+cualquiera de las versiones posteriores publicadas por la Free
+Software Foundation (véase
+\url{http://www.gnu.org/licenses/fdl.html}).  
+
+Se agradece la financiación de la Universidad del País Vasco, a través
+del grupo de investigación 9/UPV-00038.321-13503/2001, para la
+traducción de este manual.
+
+\clearpage
+
+%% end license page, start table of contents
+\pdfbookmark[1]{Índice general}{contents}
+
+\pagenumbering{Roman}
+\pagestyle{headings}
+
+\tableofcontents
+
+\clearpage
+
+\pagenumbering{arabic}
+
+\include{introduction}
+\include{starting}
+\include{modes}
+\include{datafiles}
+\include{genr}
+\include{panel}
+%% \include{sampling}
+\include{graphs}
+%% \include{nls}
+%% \include{mle}
+\include{looping}
+%% \include{functions}
+\include{vecm}
+\include{trouble}
+\include{cli}
+
+\begin{appendices}
+\include{appendices}
+\end{appendices}
+
+\include{biblio}
+
+\end{document}

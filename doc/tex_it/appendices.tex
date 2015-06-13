@@ -1,0 +1,619 @@
+\chapter{Dettagli sui file di dati}
+\label{app-datafile}
+
+\section{Formato interno di gretl}
+\label{native}
+
+Il formato dati usato internamente da \app{Gretl} per i dataset è
+basato su XML (extensible mark-up language).  I file di dati sono conformi al
+semplice DTD (document type definition) contenuto nel file
+\verb+gretldata.dtd+, fornito con la distribuzione di \app{Gretl} e
+installato nella directory dei dati di sistema (ad es.
+\verb+/usr/share/gretl/data+ su Linux). I file di dati possono essere
+non compressi o compressi con gzip; oltre ai valori dei dati,
+essi contengono altre informazioni aggiuntive, come i nomi e le descrizioni
+delle variabili, la frequenza dei dati e così via.
+
+La maggior parte degli utenti probabilmente non avrà bisogno di
+leggere o scrivere questi file, se non usando \app{Gretl} stesso, ma
+se si vuole manipolarli usando altri strumenti, può essere utile
+esaminare il DTD e qualcuno dei file di esempio forniti: il file
+\verb+data4-1.gdt+ dà un semplice esempio, il file \verb+data4-10.gdt+
+invece contiene anche delle etichette per le osservazioni.
+
+\section{Formato tradizionale di ESL}
+\label{traddata}
+
+Per compatibilità all'indietro, \app{Gretl} può elaborare anche file
+di dati nel formato ``tradizionale'' usato dal programma \app{ESL}
+di Ramanathan.  In questo formato (che era quello predefinito nelle
+versioni di \app{Gretl} precedenti alla 0.98) un dataset è
+rappresentato da due file: uno contiene i dati veri e propri, l'altro
+contiene la descrizione dei dati e le modalità per la loro lettura.
+In particolare:
+
+\begin{enumerate}
+\item \emph{Dati veri e propri}: una matrice rettangolare di numeri
+  separati da spazi vuoti. Ogni colonna rappresenta una variabile,
+  ogni riga un'osservazione per ognuna delle variabili (come in un
+  foglio elettronico). Le colonne dei dati possono essere separate da
+  spazi o caratteri tab. Il nome del file deve avere l'estensione
+  \verb+.gdt+ e il file di solito è di tipo ASCII (testo semplice), ma
+  può essere anche compresso con gzip, per occupare meno spazio su
+  disco. È possibile inserire commenti in un file di dati: se una riga
+  comincia con un carattere cancelletto (\verb+#+), l'intera riga
+  viene ignorata (questo comportamento è coerente con i file di dati
+  di gnuplot e di octave).
+\item \emph{Descrizione}: il file di dati deve essere accompagnato da
+  un file di descrizioni, che ha lo stesso nome di base del file di
+  dati, ma l'estensione \verb+.hdr+.  Questo file contiene,
+  nell'ordine:
+
+  \begin{itemize}
+  \item (Opzionale) \emph{commenti} sui dati, introdotti dalla stringa
+    di apertura \verb+(*+ e conclusi dalla stringa \verb+*)+; ognuna
+    di queste stringhe deve essere presente da sola su una riga.
+  \item (Richiesta) lista dei \emph{nomi delle variabili} presenti nel
+    file, separati da spazio bianco. I nomi sono limitati a 8
+    caratteri, devono iniziare con una lettera e possono contenere
+    solo caratteri alfanumerici e il carattere trattino basso,
+    \verb+_+. La lista può continuare su più righe e deve essere
+    chiusa da un punto e virgola \verb+;+.
+  \item (Richiesta) riga \emph{osservazioni}, nel formato 
+    \verb+1 1 85+. Il primo elemento indica la frequenza dei dati (1 per dati
+    non datati o annuali, 4 per trimestrali, 12 per mensili).  Gli
+    altri due elementi indicano le osservazioni iniziale e finale: di
+    solito questi saranno pari a 1 e al numero delle osservazioni, per
+    i dati non datati. Per le serie storiche, è possibile usare date
+    nella forma \cmd{1959.1} (trimestrale, una cifra dopo il punto) o
+    \cmd{1967.03} (mensile, due cifre dopo il punto). Si veda il
+    capitolo~\ref{chap-panel} per l'uso speciale di questa riga nel
+    caso dei dati panel.
+  \item La parola chiave \verb+BYOBS+.
+  \end{itemize}
+\end{enumerate}
+
+Ecco un esempio di un file di descrizione dei dati ben scritto.
+        
+\begin{code}
+(* 
+  DATA9-6: 
+  Dati su log(moneta), log(reddito) e tasso di interesse USA. 
+  Fonte: Stock and Watson (1993) Econometrica 
+  (dati grezzi) Il periodo è 1900-1989 (dati annuali). 
+  Dati composti da Graham Elliott. 
+*) 
+lmoneta lreddito tassint ; 
+1 1900 1989 BYOBS
+\end{code}
+          
+Il corrispondente file di dati contiene tre colonne di dati, ognuna
+con 90 osservazioni.  Ci sono altre tre caratteristiche del formato
+dati ``tradizionale'' degne di nota.
+    
+\begin{enumerate}
+\item Se la parola chiave \verb+BYOBS+ è sostituita da \verb+BYVAR+ ed
+  è seguita dalla parola chiave \verb+BINARY+, significa che il
+  corrispondente file di dati è in formato binario. Questo tipo di
+  file di dati può essere scritto da \app{gretlcli} usando il comando
+  \cmd{store} con l'opzione \cmd{-s} (precisione singola) o l'opzione
+  \cmd{-o} (precisione doppia).
+\item Se \verb+BYOBS+ è seguita dalla parola chiave \verb+MARKERS+,
+  \app{Gretl} si aspetta un file di dati in cui la \emph{prima
+    colonna} contiene stringhe (lunghe al massimo 8 caratteri) usate
+  per identificare le osservazioni. Queste possono essere utili nel
+  caso dei dati di tipo cross-section in cui le unità di osservazione
+  sono identificabili: regioni, stati, città ecc. Un altro caso è
+  quello delle serie storiche irregolari, come ad esempio i dati
+  giornalieri delle quotazioni azionarie, in cui mancano i giorni in
+  cui non avvengono contrattazioni: in questo caso, le osservazioni
+  possono essere marcate con una stringa che rappresenta la data, come
+  ad esempio \cmd{10/01/98} (si ricordi il limite di 8 caratteri). Si
+  noti che le opzioni \cmd{BINARY} e \cmd{MARKERS} sono mutualmente
+  esclusive, e si noti anche che i ``marcatori'' non sono considerati
+  come una variabile: questa colonna non compare nell'elenco delle
+  variabili nel file di descrizione dei dati.
+\item Se esiste un file con lo stesso nome di base del file di dati e
+  di quello delle descrizioni, ma con l'estensione \verb+.lbl+, esso
+  viene letto e usato per riempire le etichette descrittive per le
+  serie di dati. Il formato del file di etichette è semplice: ogni
+  riga contiene il nome di una variabile (indicata nel file di
+  descrizione) seguito da uno o più spazi, seguito dall'etichetta
+  descrittiva. Ecco un esempio:
+  \verb+prezzo Indice dei prezzi auto nuove, anno base 1982+ 
+
+\end{enumerate}
+
+Se si vuole salvare i dati nel formato tradizionale, occorre usare
+l'opzione \cmd{-t} con il comando \cmd{store}, nella versione a riga
+di comando del programma o nella finestra del terminale della versione
+grafica del programma.
+
+\section{Dettagli sui database binari}
+\label{dbdetails}
+
+Un database di \app{Gretl} consiste di due parti: un file indice ASCII
+(con l'estensione \verb+.idx+) che contiene informazioni sulle serie,
+e un file binario (con estensione \verb+.bin+) che contiene i dati
+veri e propri. Ecco due esempi di voci contenute in un file
+\verb+idx+:
+
+\begin{code}
+G0M910  Indice composto da 11 indicatori principali (1987=100) 
+M 1948.01 - 1995.11  n = 575
+currbal Bilancia dei pagamenti: parte corrente; corretta per la stagionalità
+Q 1960.1 - 1999.4 n = 160
+\end{code}
+
+Il primo campo è il nome della serie, il secondo è una descrizione
+della serie (al massimo di 128 caratteri). Sulla seconda riga, il
+primo campo è un codice di frequenza: \verb+M+ per dati mensili, \verb+Q+
+per dati trimestrali, \verb+A+ per dati annuali, \verb+B+ per dati
+giornalieri-lavorativi (giornalieri con cinque giorni a settimana) e
+\verb+D+ per dati giornalieri (sette giorni a settimana). Al momento non
+vengono accettati altri codici di frequenza. Quindi segue la data
+iniziale (con due cifre che seguono il punto nei dati mensili, una per
+i dati trimestrali, nessuna per quelli annuali), uno spazio, un
+trattino, un altro spazio, la data finale, la stringa ``\verb+n = +''
+e il numero delle osservazioni. Nel caso di dati giornalieri, le date
+iniziale e finale devono essere indicate nella forma
+\verb+YYYY/MM/DD+. Questo formato deve essere rispettato alla
+lettera.
+
+Opzionalmente, la prima riga del file indice può contenere un breve
+commento (al massimo 64 caratteri) a proposito della fonte e del tipo
+dei dati, che segue un carattere cancelletto. Ad esempio:
+      
+\begin{code}
+# Banca Centrale Europea (tassi di interesse)
+\end{code}
+
+Il corrispondente database binario contiene i valori dei dati,
+rappresentati come ``float'', ossia come numeri in virgola mobile a
+precisione singola, che tipicamente occupano quattro byte ciascuno. I
+numeri sono immagazzinati ``per variabile'', così che i primi \emph{n}
+numeri sono le osservazioni della variabile 1, i successivi \emph{m}
+sono le osservazioni per la variabile 2 e così via.
+
+\chapter{Compilare \app{gretl}}
+\label{app-build}
+
+\section{Requisiti}
+\label{sec:build-req}
+
+\app{Gretl} è scritto nel linguaggio di programmazione C, aderendo
+nel modo più stretto possibile allo standard C ISO/ANSI (C90), anche
+se l'interfaccia grafica e alcune altre componenti devono fare uso
+necessariamente di estensioni specifiche per certe piattaforme.
+  
+Il programma è sviluppato in ambiente Linux.  La libreria condivisa e
+il client a riga di comando dovrebbero essere compilabili su qualsiasi
+piattaforma che supporti l'ISO/ANSI C e abbia installate le
+librerie elencate nella Tabella~\ref{tab:depend}. Se il sistema
+dispone anche della libreria GNU readline, essa sarà usata per
+\app{gretcli}, fornendo una riga di comando molto più comoda da
+utilizzare.  Si veda la
+\href{http://cnswww.cns.cwru.edu/~chet/readline/rltop.html}{home page
+  di readline}.  
+
+\begin{table}[htbp]
+  \centering
+  \begin{tabular}{lll}
+\textit{Libreria} & \textit{Funzione} & \textit{Sito web} \\ [4pt]
+zlib & compressione dei dati &  
+   \href{http://www.info-zip.org/pub/infozip/zlib/}{info-zip.org} \\
+libxml2 & manipolazione XML &
+   \href{http://xmlsoft.org/}{xmlsoft.org} \\
+LAPACK & algebra lineare & 
+   \href{http://www.netlib.org/lapack/}{netlib.org} \\
+FFTW3 & Trasformata veloce di Fourier & 
+   \href{http://www.fftw.org/}{fftw.org} \\
+glib-2.0 & Varie utilità & 
+  \href{http://www.gtk.org/}{gtk.org}
+  \end{tabular}
+  \caption{Librerie richieste per compilare gretl}
+  \label{tab:depend}
+\end{table}
+
+Il client grafico dovrebbe essere compilabile e utilizzabile su ogni
+sistema che, oltre ai requisiti visti sopra, offra la libreria GTK
+nella versione 2.4.0 o superiore (si veda
+\href{http://www.gtk.org/}{gtk.org})\footnote{Fino alla versione 1.5.1,
+\app{gretl} poteva essere compilato anche usando GTK 1.2, ma il supporto per
+questa libreria è stato abbandonato a partire dalla versione 1.6.0 di \app{gretl}.}.
+
+\app{Gretl} usa gnuplot per produrre grafici. È possibile trovare
+gnuplot a \href{http://www.gnuplot.info/}{gnuplot.info}. Al momento
+della scrittura di questo manuale, la versione ufficiale più recente
+di gnuplot è la 4.2 (di marzo 2007).  La versione MS Windows di
+\app{Gretl} comprende la versione 4.2 di gnuplot per Windows; sul sito
+web di Gretl è possibile trovare un pacchetto rpm di gnuplot 3.8j0 per
+sistemi Linux x86.
+  
+Alcune funzionalità di \app{Gretl} fanno uso di parti della libreria
+\app{gtkextra} di Adrian Feguin.  Le parti rilevanti di questo pacchetto sono
+incluse (in forma leggermente modificata) con la distribuzione sorgente di
+\app{gretl}.
+  
+Una versione binaria del programma è disponibile per la piattaforma
+Microsoft Windows (Windows 98 o superiore).
+Questa versione è cross-compilata su Linux usando mingw (il
+compilatore GNU C, \app{gcc}, portato per l'uso con win32) e collegata
+alla libreria C di Microsoft C, \verb+msvcrt.dll+. Utilizza il port di
+GTK 2.0 su win32 di Tor Lillqvist. L'installatore per Windows (libero,
+open-source) è a cura di Jordan Russell
+(\href{http://www.jrsoftware.org/}{jrsoftware.org}).  
+
+Speriamo che gli utenti con conoscenze di programmazione possano
+considerare \app{Gretl} abbastanza interessante e degno di essere
+migliorato ed esteso. La documentazione dell'API libgretl non è ancora
+completa, ma è possibile trovare alcuni dettagli seguendo il link
+``Libgretl API docs'' sul sito web di \app{Gretl}. Chiunque sia interessato
+allo sviluppo di \app{gretl} è invitato a iscriversi alla mailing list
+\href{http://gretl.sourceforge.net/lists.html}{gretl-devel}.
+
+\section{Istruzioni per la compilazione}
+\label{sec:build-inst}
+
+Questa sezione contiene istruzioni che permettono di compilare \app{gretl}
+a un utente con una conoscenza di base di un sistema di tipo Unix.
+La procedura è stata testata su una nuova installazione della distribuzione
+Debian Etch e dovrebbe funzionare anche su altre distribuzioni Linux
+(specialmente quelle derivate da Debian, come Ubuntu e simili). Su altri sistemi
+simili a Unix, come MacOSX e BSD, potrebbero esserci differenze maggiori nella
+procedura.
+
+In questo esempio guidato, compileremo \app{gretl} insieme alla sua
+documentazione completa. Questa scelta implica alcuni requisiti in più, ma in
+cambio permette di modificare anche i file della documentazione, come l'aiuto in
+linea o i manuali.
+
+\subsection{Installare i programmi di base}
+
+Assumiamo che le utilità GNU di base siano già installate sul sistema, insieme
+a questi altri programmi:
+\begin{itemize}
+  \item Un sistema \TeX/\LaTeX (\texttt{tetex} o \texttt{texlive} vanno
+    benissimo)
+  \item Gnuplot
+  \item ImageMagick
+\end{itemize}
+Assumiamo anche che l'utente abbia i privilegi di amministratore e sappia come
+installare i pacchetti. Gli esempi seguenti mostrano  l'uso del comando shell
+\texttt{apt-get}, ma possono essere replicati anche con comandi come
+\texttt{aptitude}, \texttt{dselect}, con il programma a interfaccia grafica
+\texttt{synaptic}. Gli utenti di distribuzioni Linux che usano pacchetti rpm
+(es.\ Red Hat/Fedora, Mandriva, SuSE) possono consultare la pagina
+\href{http://gretl.sourceforge.net/depend_it.html}{dipendenze} sul sito di
+\app{gretl}.
+
+Il primo passo consiste nell'installare il compilatore C e le utilità correlate.
+Su un sistema Debian, occorre installare i seguenti pacchetti:
+\begin{code}
+apt-get install gcc autoconf automake1.9 libtool flex bison gcc-doc \
+libc6-dev libc-dev libgfortran1 libgfortran1-dev gettext pkgconfig
+\end{code}
+
+Quindi occorre installare i pacchetti ``di sviluppo'' (\texttt{dev})
+per le librerie usate da \app{gretl}:
+
+\begin{center}
+  \begin{tabular}{ll}
+    \textit{Libreria} & \textit{Comando} \\ [4pt]
+    GLIB & \texttt{apt-get install libglib2.0-dev} \\
+    GTK 2.0 & \texttt{apt-get install libgtk2.0-dev} \\
+    PNG & \texttt{apt-get install libpng12-dev} \\
+    XSLT & \texttt{apt-get install libxslt1-dev} \\
+    LAPACK & \texttt{apt-get install lapack3-dev} \\
+    FFTW & \texttt{apt-get install fftw3-dev} \\
+    READLINE & \texttt{apt-get install libreadline5-dev} \\
+    GMP & \texttt{apt-get install libgmp3-dev}
+  \end{tabular}
+\end{center}
+
+GMP è opzionale, ma raccomandata.  I pacchetti \texttt{dev} di queste librerie
+sono necessari per \emph{compilare} \app{gretl}, mentre per \emph{eseguire} il
+programma occorrono anche i pacchetti normali (non-\texttt{dev}) delle librerie;
+la maggior parte di questi pacchetti fa già parte delle installazioni standard.
+Per abilitare funzionalità aggiuntive, come il supporto audio, occorre
+installare altre librerie.
+
+\subsection{Procurarsi il sorgente: pacchetto o CVS}
+
+A questo punto è possibile iniziare a compilare il sorgente. È possibile
+procurarselo in due modi: scaricando l'ultimo pacchetto sorgente rilasciato, o
+scaricando la versione di \app{gretl} contenuta attualmente nell'archivio CVS
+(Concurrent Versions System). La versione CVS è di solito più recente, può
+contenere correzioni di bug presenti nell'ultimo pacchetto rilasciato, ma può
+anche contenere nuovi bug (o addirittura non essere compilabile) e codice
+``sperimentale''. Se si vuole partecipare allo sviluppo e al test del programma,
+è raccomandabile usare la versione CVS di \app{gretl}.
+
+Per lavorare col pacchetto sorgente:
+
+\begin{enumerate}
+  \item Scaricare il pacchetto dei sorgenti di \app{Gretl}
+    da \href{http://gretl.sourceforge.net/}{gretl.sourceforge.net}.
+  \item Decomprimere il pacchetto. Se si dispone delle utilità GNU,
+    usare il comando \cmd{tar xvfz gretl-N.tar.gz} (sostituire \cmd{N}
+    con il numero di versione specifico del file scaricato).
+  \item Spostarsi nella directory del codice sorgente di gretl appena
+    creata (ad es. \verb+gretl-1.6.6+).
+  \item Procedere alla sezione seguente ``Configurare il sorgente''.
+\end{enumerate}
+          
+Per lavorare con CVS occorre per prima cosa installare il programma client \app{cvs},
+se non si trova già sul proprio sistema. Può essere utile consultare il sito web
+di CVS \href{http://www.nongnu.org/cvs/}{www.nongnu.org/cvs}, le istruzioni per
+l'uso di CVS su SourceForge contenute nella
+\href{http://sourceforge.net/docman/display_doc.php?docid=14035&group_id=1}{pagina
+CVS di SourceForge}, e le istruzioni specifiche su \app{gretl} nella
+\href{http://sourceforge.net/cvs/?group_id=36234}{pagina CVS di Gretl}.
+
+Quando si scarica il codice da CVS \textit{per la prima volta}, occorre decidere
+dove salvarlo. Ad esempio si può creare una directory chiamata \texttt{cvs}
+nella propria home directory, aprire un terminale, fare \texttt{cd} in questa
+directory ed eseguire i comandi seguenti:
+%
+\begin{code}
+cvs -d:pserver:anonymous@gretl.cvs.sourceforge.net:/cvsroot/gretl login
+cvs -z3 -d:pserver:anonymous@gretl.cvs.sourceforge.net:/cvsroot/gretl co -P gretl
+\end{code}
+%
+Dopo il primo comando verrà richiesta una password: basta premere invio. Dopo il
+secondo comando, \app{cvs} creerà una sotto-directory chiamatat \texttt{gretl}
+che conterrà il codice sorgente.
+
+Ogni volta che si vuole \textit{aggiornare la propria copia del sorgente}, basta
+andare nella directory \texttt{gretl} ed eseguire
+\begin{code}
+cvs update -d -P
+\end{code}
+
+Da questo punto in poi, assumendo di essere nella directory \texttt{gretl}, è
+possibile seguire le istruzioni valide anche per il sorgente contenuto nel
+pacchetto.
+
+\subsection{Configurare il sorgente}
+
+Il successivo comando da eseguire è \texttt{./configure}; si tratta di uno
+script sofisticato che cerca gli strumenti disponibili sul sistema e prepara
+la compilazione. Il comando \texttt{configure} accetta molte opzioni: eseguendo
+\begin{code}
+./configure --help
+\end{code}
+si ottiene l'elenco di quelle disponibili. Un'opzione che può essere utile usare
+è \cmd{--prefix}, che modifica il percorso principale in cui verrà installato il
+programma; il valore predefinito è \verb+/usr/local+. Ad esempio usando
+\begin{code}
+./configure --prefix=/usr
+\end{code}
+i file verranno installati sotto il percorso \verb+/usr+. Un'altra opzione ha a
+che fare col supporto per il desktop \app{gnome}, che \app{gretl} offre in
+modalità predefinita. Se non si è interessati alle funzionalità specifiche di
+\app{gnome} è possibile usare l'opzione
+\verb+--without-gnome+ di \cmd{configure}.
+
+Per compilare anche la documentazione, c'è un'altra opzione di
+\texttt{configure}:
+\begin{code}
+./configure --enable-build-doc
+\end{code}
+Quando si esegue il comando, si vedranno i risultati di una serie di controlli,
+e se tutto funziona correttamente, un riassunto finale simile a quello mostrato
+nell'Esempio~\ref{configure-output}.
+
+\begin{script}[htbp]
+  \caption{Risultato di \texttt{./configure --enable-build-doc}}
+  \label{configure-output}
+\begin{scode}
+Configuration:
+
+  Installation path:                      /usr/local
+  Use readline library:                   yes
+  Use gnuplot for graphs:                 yes
+  Use PNG for gnuplot graphs:             yes
+  Use LaTeX for typesetting output:       yes
+  Gnu Multiple Precision support:         yes
+  MPFR support:                           no
+  LAPACK support:                         yes
+  FFTW3 support:                          yes
+  Build with GTK version:                 2.0
+  Script syntax highlighting:             yes
+  Use installed gtksourceview:            yes
+  Build with gnome support:               no
+  Build gretl documentation:              yes
+  Build message catalogs:                 yes
+  Gnome installation prefix:              NA
+  X-12-ARIMA support:                     yes
+  TRAMO/SEATS support:                    yes
+  Experimental audio support:             no
+
+Now type 'make' to build gretl.
+\end{scode}
+\end{script}
+
+\tip{Se si usa CVS, è una buona idea ri-eseguire lo script
+  \texttt{configure} dopo ogni operazione di aggiornamento del sorgente.
+  Non è sempre necessario, ma alcune volte lo è; in ogni caso non è dannoso.
+  A questo proposito, può essere comodo creare un piccolo script di shell che
+  esegue \texttt{configure} con le opzioni che si è soliti utilizzare.}
+
+\subsection{Compilare e installare}
+
+Siamo quindi pronti per iniziare la vera e propria compilazione: questa si
+ottiene col comando \texttt{make}, che compila tutti i file sorgenti nell'ordine
+corretto. Basta semplicemente eseguire
+\begin{code}
+make 
+\end{code}
+
+Questo passo della procedura richiederà qualche minuto e produrrà molti messaggi
+sullo schermo. Alla fine, per installare la copia di \app{gretl} appena
+prodotta, basterà eseguire:
+\begin{code}
+make install
+\end{code}
+
+Sulla maggior parte dei sistemi, il comando \texttt{make install} richiede di avere
+i privilegi di amministratore di sistema. Quindi occorrerà fare login come
+\texttt{root} prima di eseguirlo, oppure occorrerà usare il comando
+\texttt{sudo}:
+\begin{code}
+sudo make install
+\end{code}
+
+\chapter{Accuratezza numerica}
+\label{app-accuracy}
+
+\app{Gretl} usa aritmetica a doppia precisione, ad eccezione del
+plugin per precisione multipla invocabile con il comando del menù
+``Modello, Altri modelli lineari, Minimi quadrati in alta precisione'' che rappresenta i
+valori in virgola mobile usando un numero di bit indicato dalla
+variabile di ambiente \verb+GRETL_MP_BITS+ (valore predefinito: 256).
+
+Le equazioni normali dei minimi quadrati sono risolte in modo
+predefinito usando la decomposizione di Cholesky, che è abbastanza
+accurata per la maggior parte delle applicazioni. Nel caso le variabili
+indipendenti esibiscano un'alto grado di collinearità, \app{gretl} adotta
+automaticamente la decomposizione QR; inoltre l'utente può scegliere di usare
+sempre la decomposizione QR.
+
+Il programma è stato testato abbastanza approfonditamente con i dataset di
+riferimento forniti dal NIST (il National Institute of Standards and Technology
+statunitense) e un rapporto completo dei risultati si trova sul sito web di
+Gretl (seguendo il link ``Accuratezza numerica'').
+
+Ad oggi, sono state pubblicate due recensioni che hanno preso in esame
+l'accuratezza di \app{gretl}: Giovanni Baiocchi e Walter Distaso (2003), e Talha
+Yalta e Yasemin Yalta (2007). Siamo grati a questi autori per il loro accurato
+esame del programma. I loro commenti hanno suggerito vari miglioramenti, come
+l'uso del codice \app{cephes} di Stephen Moshier per calcolare i p-value e altre
+quantità relative alle distribuzioni di probabilità (si veda
+\href{http://www.netlib.org/cephes/}{netlib.org}), modifiche alla formattazione
+dei risultati delle regressioni per assicurare che il programma mostri un numero
+coerente di cifre significative, soluzione di alcuni problemi di compilazione
+della versione MS Windows di \app{gretl} (che in passato era leggermente meno
+accurata della versione Linux).
+
+La versione attuale di \app{Gretl} comprende un ``plugin'' che esegue
+la suite NIST di test della regressione lineare. È possibile trovarlo
+nel menù ``Strumenti'' della finestra principale. Quando viene eseguito
+questo test, un'introduzione spiega qual è il risultato atteso: se si
+esegue il test e si ottengono risultati diversi da quelli attesi, si
+prega di inviare un bug report a \verb+cottrell@wfu.edu+.  
+
+Tutte le statistiche di regressione sono mostrate
+con 6 cifre significative nella versione attuale di \app{Gretl}
+(tranne quando viene usato il plugin per precisione multipla, e allora
+i risultati sono mostrati con 12 cifre). Se occorre esaminare un
+valore più da vicino, basta per prima cosa salvarlo (si veda il
+comando \cmd{genr}) e poi visualizzarlo usando il comando \cmd{printf}.
+
+
+\chapter{Altro software libero utile}
+\label{app-advanced}
+
+Le possibilità offerte da \app{gretl} sono molte e in continua espansione,
+tuttavia può esserci l'esigenza di compiere operazioni non disponibili in
+\app{gretl}, oppure di confrontare i risultati con quelli di altri programmi.
+Se si è interessati a funzionalità complementari disponibili nell'ambito del
+software libero, o open source, raccomandiamo i programmi seguenti, di cui
+riportiamo la descrizione fornita nei rispettivi siti web.
+
+\begin{itemize}
+
+\item \textbf{GNU R} \href{http://www.r-project.org/}{r-project.org}:
+  ``R è un sistema per il calcolo statistico e i grafici. Consiste in
+  un linguaggio e in un ambiente di lavoro che fornisce grafici, un
+  debugger, l'accesso alle funzioni del sistema e la possibilità di eseguire
+  programmi contenuti all'interno di script\dots\ È compilabile ed eseguibile
+  su un'ampia varietà di piattaforme UNIX, Windows e MacOS''.
+  Commento: esistono molti pacchetti aggiuntivi per R, che coprono le principali
+  aree dell'analisi statistica.
+
+\item \textbf{GNU Octave}
+  \href{http://www.octave.org/}{www.octave.org}:
+  ``GNU Octave è un linguaggio ad alto livello, dedicato principalmente al
+  calcolo numerico. Fornisce una comoda interfaccia a riga di comando per
+  risolvere numericamente problemi lineari e non lineari, e per eseguire altre
+  operazioni numeriche usando un linguaggio per lo più compatibile con quello di
+  Matlab. Può anche essere utilizzato in modalità non interattiva''.
+
+\item \textbf{JMulTi} \href{http://www.jmulti.de/}{www.jmulti.de}:
+  ``JMulTi è stato progettato in origine come strumento per alcune procedure
+  econometriche tipiche dell'analisi delle serie storiche, di difficile utilizzo
+  e reperibilità in altri pacchetti, come l'analisi impulso-risposta con
+  intervalli di confidenza bootstrap per modelli VAR/VEC. In seguito, sono state
+  aggiunte altre funzionalità che permettono di condurre un'analisi completa''.
+  Commento: JMulTi è un programma java con interfaccia grafica; per poterlo
+  usare è necessario installare un java run-time environment.
+
+\end{itemize}
+
+Come già detto sopra, \app{Gretl} offre la possibilità di
+esportare i dati nei formati di Octave e R. Nel caso di Octave, il
+dataset di \app{Gretl} viene salvato come matrice singola \verb+X+:
+una volta importati i dati in Octave, se si vuole, è possibile
+eliminare la matrice \verb+X+, si veda il manuale di Octave per i
+dettagli.  Per quanto riguarda R, il file dei dati esportati conserva
+qualsiasi struttura di serie storiche riconoscibile da \app{gretl}.
+Le serie sono salvate come strutture individuali: i dati vanno
+importati in R con il comando \cmd{source()}.
+  
+Inoltre, \app{Gretl} dispone di una funzione per trasferire velocemente dati in R.
+Il menù ``Strumenti'' di \app{Gretl} contiene il comando ``Avvia GNU R'', che
+salva il dataset in uso in formato R (nella directory utente di gretl) e lo
+carica avviando una nuova sessione di R. Il modo esatto in cui R viene avviato
+dipende dalla variabile interna \verb+Rcommand+ di \app{gretl}, il cui valore
+deve essere impostato nel menù ``Strumenti, Preferenze''. Il comando
+predefinito è \cmd{RGui.exe} in MS Windows, mentre in X è \cmd{xterm -e R}. Si
+noti che questa stringa può contenere al massimo tre elementi separati da spazi:
+ulteriori elementi saranno ignorati.
+
+\chapter{Elenco degli URL}
+\label{app-urls}
+
+Quello che segue è un elenco degli URL citati nel testo.
+
+\begin{description}
+
+\item[Estima (RATS)] \url{http://www.estima.com/}
+\item[FFTW3] \url{http://www.fftw.org/}
+\item[Home page del desktop Gnome] \url{http://www.gnome.org/}
+\item[Libreria GNU Multiple Precision (GMP)]
+  \url{http://swox.com/gmp/}
+\item[Home page di GNU Octave] \url{http://www.octave.org/}
+\item[Home page di GNU R] \url{http://www.r-project.org/}
+\item[Manuale di GNU R]
+  \url{http://cran.r-project.org/doc/manuals/R-intro.pdf}
+\item[Home page di Gnuplot] \url{http://www.gnuplot.info/}
+\item[Manuale di Gnuplot] \url{http://ricardo.ecn.wfu.edu/gnuplot.html}
+\item[Pagina dei dati di Gretl (versione italiana)]
+  \url{http://gretl.sourceforge.net/gretl_data_it.html}
+\item[Home page di Gretl (versione italiana)] 
+  \url{http://gretl.sourceforge.net/gretl_italiano.html}
+\item[Home page di GTK+] \url{http://www.gtk.org/}
+\item[Home page del port di GTK+ per win32]
+  \url{http://www.gimp.org/~tml/gimp/win32/}
+\item[Home page di InfoZip]
+  \url{http://www.info-zip.org/pub/infozip/zlib/}
+\item[Home page di JMulTi] \url{http://www.jmulti.de/}
+\item[JRSoftware] \url{http://www.jrsoftware.org/}
+\item[Home page di Mingw (gcc per win32)] \url{http://www.mingw.org/}
+\item[Minpack] \url{http://www.netlib.org/minpack/}
+\item[Penn World Table] \url{http://pwt.econ.upenn.edu/}
+\item[Home page di Readline]
+  \url{http://cnswww.cns.cwru.edu/~chet/readline/rltop.html}
+\item[Manuale di Readline]
+  \url{http://cnswww.cns.cwru.edu/~chet/readline/readline.html}
+\item[Home page di Xmlsoft] \url{http://xmlsoft.org/}
+
+\end{description}
+
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "gretl-guide-it"
+%%% End: 
+

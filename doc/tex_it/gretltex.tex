@@ -1,0 +1,394 @@
+\chapter{Gretl e \TeX}
+\label{gretltex}
+
+
+\section{Introduzione}
+\label{tex-intro}
+
+\TeX, sviluppato inizialmente da Donald Knuth della Stanford University
+e poi migliorato da centinaia di sviluppatori di tutto il mondo, è
+il punto di riferimento per la composizione di testi scientifici.
+\app{Gretl} fornisce vari comandi che consentono di vedere un'anteprima
+o di stampare i risultati delle analisi econometriche usando 
+\TeX, oltre che di salvare i risultati in modo da poter essere
+successivamente modificati con \TeX.
+
+Questo capitolo spiega in dettaglio le funzionalità di \app{gretl}
+che interessano \TeX. La prima sezione descrive i menù nell'interfaccia grafica,
+la sezione~\ref{tex-tune} discute vari modi di personalizzare i risultati
+prodotti da \TeX, la sezione~\ref{tex-encode} spiega come gestire la codifica
+dei caratteri per le lingue diverse dall'inglese, mentre la
+sezione~\ref{tex-install} fornisce alcune indicazioni per conoscere meglio \TeX
+e installarlo, se ancora non lo si ha sul proprio computer. Per chiarezza: \TeX\
+non è incluso nella distribuzione standard di \app{gretl}, è un pacchetto
+separato, che comprende vari programmi e file di supporto.
+
+Prima di procedere, può essere utile chiarire brevemente il modo in cui
+viene prodotto un documento usando \TeX. La maggior parte di questi dettagli
+non necessitano di alcuna preoccupazione da parte dell'utente, visto che
+sono gestiti automaticamente da \app{gretl}, ma una comprensione di base dei
+meccanismi all'opera può aiutare nella scelta delle opzioni a disposizione.
+
+Il primo passo consiste nella creazione di un file ``sorgente'' testuale,
+che contiene il testo o le espressioni matematiche che compongono il documento,
+assieme ad alcuni comandi mark-up che regolano la formattazione del documento.
+Il secondo passo consiste nel fornire il file a un motore che esegue la
+formattazione vera e propria. Tipicamente, si tratta di:
+\begin{itemize}
+\item un programma chiamato \app{latex}, che genera un risultato in formato
+  DVI (device-independent), oppure
+\item un programma chiamato \app{pdflatex}, che genera un risultato in formato
+  PDF\footnote{Gli utenti più esperti hanno dimestichezza anche con il
+  cosiddetto ``plain \TeX'', che viene processato dal programma \app{tex}.
+  La maggioranza degli utenti di \TeX, comunque, usa le macro fornite dal
+  programma \LaTeX, sviluppato inizialmente da Leslie Lamport. \app{Gretl}
+  non supporta il plain \TeX.}.
+\end{itemize}
+
+Per visualizzare le anteprime, si può utilizzare un visualizzatore DVI,
+(tipicamente \app{xdvi} sui sistemi GNU/Linux) o PDF (ad esempio Adobe Acrobat
+Reader o \app{xpdf}, a seconda di come è stato processato il sorgente.  Se si
+sceglie la via del DVI, c'è un ultimo passo per creare un documento stampabile,
+che tipicamente richiede il programma \app{dvips} per generare un file in
+formato PostScript. Se si sceglie la via del PDF, il documento è pronto per
+essere stampato.
+
+Sulle piattaforme MS Windows e Mac OS X, \app{gretl} richiama
+\app{pdflatex} per processare il file sorgente e si aspetta che il sistema
+operativo sia in grado di eseguire un programma per visualizzare il file PDF; il
+formato DVI non è supportato. Su GNU/Linux, la scelta predefinita è per il formato
+DVI, ma se si preferisce usare il PDF basta seguire queste istruzioni:
+dal menù ``Strumenti, Preferenze, Generali'', nella sezione ``Programmi'',
+impostare il ``Comando per compilare i file TeX'' a \texttt{pdflatex}; inoltre
+assicurarsi che il ``Comando per visualizzare i file PDF'' sia ben impostato.
+
+\section{I comandi \TeX nei menù}
+\label{tex-menus}
+
+\subsection{La finestra del modello}
+
+La maggior parte dei comandi di \app{gretl} relativi a \TeX\ si trova nel menù
+``LaTeX'' della finestra del modello, che contiene le voci ``Visualizza'',
+``Copia'', ``Salva'' e ``Opzioni equazione'' (si veda la Figura~\ref{fig:latex-menu}).
+
+\begin{figure}[htbp]
+  \caption{Il menù \LaTeX\ della finestra del modello}
+  \label{fig:latex-menu}
+  \begin{center}
+    \includegraphics[scale=0.75]{figures/latex_menu}
+  \end{center}
+\end{figure}
+
+Ognuna delle prime tre voci, a sua volta, contiene due opzioni, intitolate
+``Tabella'' ed ``Equazione''.  Selezionando ``Tabella'', il modello viene
+rappresentato in forma tabulare, consentendo la rappresentazione più completa ed
+esplicita dei risultati; l'esempio mostrato nella Tabella~\ref{tab:mod1} è stato
+creato proprio scegliendo il comando ``Copia, Tabella'' di \app{gretl} (per
+brevità sono state omesse alcune righe).
+
+\begin{table}[htbp]
+\caption{Esempio dell'output \LaTeX\ tabulare}
+\label{tab:mod1}
+\begin{center}
+
+Modello 1: Stime OLS usando le 51 osservazioni 1-51\\
+Variabile dipendente: ENROLL\\
+
+\vspace{1em}
+
+\begin{tabular*}{.8\textwidth}{@{\extracolsep{\fill}}
+l% col 1: varname
+  D{.}{.}{-1}% col 2: coeff
+    D{.}{.}{-1}% col 3: sderr
+      D{.}{.}{-1}% col 4: t-stat
+        D{.}{.}{4}}% col 5: p-value (or slope)
+Variabile &
+  \multicolumn{1}{c}{Coefficiente} &
+    \multicolumn{1}{c}{Errore\ Std.} &
+      \multicolumn{1}{c}{statistica $t$} &
+        \multicolumn{1}{c}{p-value} \\[1ex]
+const &
+  0.241105 &
+    0.0660225 &
+      3.6519 &
+        0.0007 \\
+CATHOL &
+  0.223530 &
+    0.0459701 &
+      4.8625 &
+        0.0000 \\
+PUPIL &
+  -0.00338200 &
+    0.00271962 &
+      -1.2436 &
+        0.2198 \\
+WHITE &
+  -0.152643 &
+    0.0407064 &
+      -3.7499 &
+        0.0005 \\
+\end{tabular*}
+
+\vspace{1em}
+
+\begin{tabular}{lD{.}{.}{-1}}
+Media della variabile dipendente & 0.0955686 \\
+ D.S. della variabile dipendente & 0.0522150 \\
+Somma dei quadrati dei residui & 0.0709594 \\
+Errore standard dei residui ($\hat{\sigma}$) & 0.0388558 \\
+$R^2$ & 0.479466 \\
+$\bar{R}^2$ corretto & 0.446241 \\
+$F(3, 47)$ & 14.4306 \\
+\end{tabular}
+\end{center}
+\end{table}
+
+L'opzione ``Equazione'' si spiega da sé: i risultati della stima vengono scritti
+sotto forma di equazione, nel modo seguente
+
+%%% the following needs the amsmath LaTeX package
+
+\begin{gather}
+\widehat{\rm ENROLL} = 
+\underset{(0.066022)}{0.241105}
++\underset{(0.04597)}{0.223530}\,\mbox{CATHOL}
+-\underset{(0.0027196)}{0.00338200}\,\mbox{PUPIL}
+-\underset{(0.040706)}{0.152643}\,\mbox{WHITE}
+ \notag \\
+T = 51 \quad \bar{R}^2 = 0.4462 \quad F(3,47) = 14.431 \quad \hat{\sigma} = 0.038856\notag \\
+\centerline{(errori standard tra parentesi)} \notag
+\end{gather}
+
+La differenza tra i comandi ``Copia'' e ``Salva'' è di due tipi. Innanzitutto,
+``Copia'' copia il sorgente \TeX\ negli appunti, mentre ``Salva'' richiede il
+nome di un file in cui verrà salvato il sorgente. In secondo luogo, con
+``Copia'' il materiale viene copiato come ``frammento'' di file \TeX, mentre con
+``Salva'' viene salvato come file completo. La differenza si spiega tenendo
+conto che un file sorgente \TeX\ completo comprende un preambolo che contiene
+comandi come \verb|\documentclass|, che definisce il tipo di documento (ad
+esempio articolo, rapporto, libro, ecc.) e come \verb|\begin{document}| e
+\verb|\end{document}|, che delimitano l'inizio e la fine del documento. Questo
+materiale aggiuntivo viene incluso quando si sceglie ``Salva'', ma non quando si
+sceglie ``Copia'', visto che in questo caso si presume che l'utente incollerà i
+dati in un file sorgente \TeX\ già provvisto del preambolo richiesto.
+
+I comandi del menù ``Opzioni equazione'' sono chiari: determinano se, quando
+si stampa il modello sotto forma di equazione, verranno mostrati gli errori
+standard o i rapporti $t$ tra parentesi sotto le stime dei parametri.
+L'impostazione predefinita è quella di mostrare gli errori standard.
+
+\subsection{Altre finestre}
+
+Altre finestre usate per la visualizzazione dei risultati contengono dei comandi
+per visualizzare, copiare e salvare in formato \TeX. Nel caso di finestre che
+contengono una barra degli strumenti grafica, basta fare clic sul pulsante
+\TeX; la Figura~\ref{fig:tex-icon} mostra questa icona (la penultima della barra
+degli strumenti), insieme alla finestra di dialogo che appare quando si preme il
+pulsante.
+
+\begin{figure}[htbp]
+  \caption{L'icona \TeX\ e la sua finestra di dialogo}
+  \label{fig:tex-icon}
+    \begin{center}
+      \includegraphics[scale=0.75]{figures/texdialog} 
+    \end{center}
+\end{figure}
+
+Un aspetto del supporto \TeX\ di \app{gretl} che può risultare utile per le
+pubblicazioni scientifiche è la possibilità di esportare la ``tabella modelli''
+(si veda la sezione~\ref{model-table}). Un esempio è mostrato nella Tabella~\ref{tab:modeltab}.
+
+\begin{table}[htbp]
+\caption{La tabella modelli in formato \TeX}
+\label{tab:modeltab}
+\begin{center}
+Stime OLS\\
+Variabile dipendente: ENROLL \\
+\vspace{1em}
+
+\begin{tabular}{lccc}
+ & Modello 1  & Modello 2  & Modello 3 \\  [6pt] 
+const & $\,\,$0.2907$^{**}$ & $\,\,$0.2411$^{**}$ & 0.08557 \\
+& \footnotesize{(0.07853)} & \footnotesize{(0.06602)} & \footnotesize{(0.05794)} \\ [4pt] 
+CATHOL & $\,\,$0.2216$^{**}$ & $\,\,$0.2235$^{**}$ & $\,\,$0.2065$^{**}$ \\
+& \footnotesize{(0.04584)} & \footnotesize{(0.04597)} & \footnotesize{(0.05160)} \\ [4pt] 
+PUPIL & $-$0.003035 & $-$0.003382 & $-$0.001697 \\
+& \footnotesize{(0.002727)} & \footnotesize{(0.002720)} & \footnotesize{(0.003025)} \\ [4pt] 
+WHITE & $\,\,$$-$0.1482$^{**}$ & $\,\,$$-$0.1526$^{**}$ & \\
+& \footnotesize{(0.04074)} & \footnotesize{(0.04071)} & \\ [4pt] 
+ADMEXP & $-$0.1551 & & \\
+& \footnotesize{(0.1342)} & & \\ [4pt] 
+$n$ & 51 & 51 & 51 \\
+$\bar R^2$ & 0.4502 & 0.4462 & 0.2956 \\
+$\ell$ & 96.09 & 95.36 & 88.69 \\
+\end{tabular}
+
+\vspace{1em}
+Errori standard tra parentesi\\
+{}* indica significatività al livello del 10 per cento\\
+{}** indica significatività al livello del 5 per cento\\
+\end{center}
+\end{table}
+
+
+\section{Personalizzare l'output di \TeX}
+\label{tex-tune}
+
+È possibile operare su tre aspetti: modificare l'aspetto dell'output prodotto
+da \app{gretl} nella modalità di anteprima \LaTeX, modificare la formattazione
+delle tabelle dei modelli create con il comando \texttt{tabprint}, e
+incorporare l'output di \app{gretl} nei propri file \TeX.
+
+\subsection{La modalità anteprima}
+
+Per quanto riguarda l'\emph{anteprima} dei documenti \LaTeX, è possibile controllare l'aspetto
+dell'output di \app{gretl} usando un file chiamato \verb+gretlpre.tex+, che deve
+trovarsi nella propria directory utente di \app{gretl} (si veda la \GCR).
+Il contenuto di questo file verrà usato come ``preambolo'' per il sorgente \TeX,
+e il suo valore predefinito è il seguente:
+    
+\begin{code}
+\documentclass[11pt]{article}
+\usepackage[latin1]{inputenc}
+\usepackage{amsmath}
+\usepackage{dcolumn,longtable}
+\begin{document}
+\thispagestyle{empty}
+\end{code}
+
+Si noti che sono richiesti i pacchetti \verb+amsmath+ e \verb+dcolumn+ (per
+alcuni tipi di risultati è richiesto anche il pacchetto \verb+longtable+).
+Modificando questo file, è possibile, ad esempio, cambiare il carattere usato, o
+la dichiarazione \texttt{documentclass}, oppure ancora includere un pacchetto
+alternativo.
+ 
+La riga \verb|\usepackage[latin1]{inputenc}| viene automaticamente modificata se
+\app{gretl} si trova ad essere eseguito su un sistema che usa la codifica
+caratteri UTF-8, si veda la sezione~\ref{tex-encode} seguente.
+
+Inoltre, se occorre comporre l'output di \app{gretl} in più di una lingua, è
+possibile preparare file specializzati per ognuna delle lingue da usare,
+chiamandoli con il nome \verb|gretlpre_xx.tex|, dove \texttt{xx} sta per le
+prime due lettere della variabile di ambiente \texttt{LANG}, che indica la
+lingua usata dal sistema. Ad esempio, se si sta utilizzando il programma in
+lingua polacca, usando \verb|LANG=pl_PL|, \app{gretl} compirà le operazioni
+seguenti per formare il preambolo di un file sorgente \TeX:
+
+\begin{enumerate}
+\item Cercare un file chiamato \verb|gretlpre_pl.tex| nella directory utente
+  di \app{gretl}.
+\item Se esso non viene trovato, cercare un file chiamato \verb|gretlpre.tex|.
+\item Se esso non viene trovato, usare il preambolo predefinito visto sopra.
+\end{enumerate}
+
+Al contrario, supponendo di utilizzare di solito \app{gretl} in una lingua diversa
+dall'inglese ma di voler talvota creare dei documenti in inglese, basta creare
+un file \verb|gretlpre_en.tex|, che verrà usato per comporre il preambolo quando
+\app{gretl} è eseguito con la localizzazione inglese (ossia, ad esempio con
+\verb|LANG=en_US|).  
+
+\subsection{Opzioni a riga di comando}
+
+Dopo aver stimato un modello in uno script o interattivamente (usando il
+terminale di \app{gretl} o la versione a riga di comando del programma \app{gretlcli})
+è possibile usare i comandi \texttt{tabprint} o \texttt{eqnprint} per stampare
+il modello rispettivamente in formato tabulare o sotto forma di equazione.
+Questi comandi sono presentati nella \GCR{}.  
+
+È possibile modificare la visualizzazione del formato tabulare usato da
+\app{gretl} specificando un formato di riga personalizzato con l'opzione
+\verb|--format| del comando \texttt{tabprint}. La stringa di formato deve essere
+racchiusa tra virgolette doppie e preceduta da un segno di uguale, senza spazi.
+La composizione della stringa di formato è la seguente: ci sono
+quattro campi, che rappresentano il coefficiente, l'errore standard, il
+rapporto $t$ e il p-value. Questi campi vanno separati
+usando barre verticali e possono contenere una specificazione di formato
+per valori numerici nello stile della funzione \texttt{printf}, oppure
+possono essere lasciati in bianco, in modo da sopprimere la
+visualizzazione del campo nella rispettiva colonna dela tabella (con
+l'unico vincolo che non è possibile lasciare in bianco tutti i campi).
+Ecco alcuni esempi:
+
+\begin{code}
+--format="%.4f|%.4f|%.4f|%.4f"
+--format="%.4f|%.4f|%.3f|"
+--format="%.5f|%.4f||%.4f"
+--format="%.8g|%.8g||%.4f"
+\end{code}
+
+La prima specificazione stampa i valori di tutte le colonne usando 4
+cifre decimali. La seconda sopprime il p-value e mostra il rapporto $t$ con 3
+cifre decimali. La terza omette il rapporto $t$, mentre l'ultima omette il
+rapporto $t$ e mostra sia il coefficiente che l'errore standard con 8 cifre
+significative.
+
+Una volta che si imposta un formato in questo modo, esso viene ricordato
+e usato per tutta la sessione di lavoro. Per tornare ad usare il formato
+predefinito, basta usare la parola chiave \verb|--format=default|.
+
+\subsection{Modifiche ulteriori}
+
+Dopo aver incollato l'output \TeX\ di \app{gretl} nel proprio documento, o dopo
+averlo salvato in un file ed aperto nel proprio editor, è naturalmente possibile
+modificarlo a proprio piacimento. Di solito il codice \TeX\ generato dai
+programmi automaticamente è difficile da comprendere, ma quello generato da
+\app{gretl} è fatto in modo da essere il più possibile comprensibile e facile da
+modificare. Inoltre, non utilizza alcun pacchetto che non sia compreso nelle
+distribuzioni standard di \TeX: come detto sopra, a parte le classi di documento
+standard di \LaTeX, gli unici pacchetti richiesti sono
+\verb+amsmath+, \verb+dcolumn+ e \verb+longtable+, che sono compresi
+praticamente in qualsiasi distribuzione \TeX\ abbastanza completa.
+
+\section{Codifica dei caratteri}
+\label{tex-encode}
+
+Se si utilizza \app{gretl} su un sistema configurato per la lingua inglese non
+si dovrebbero incontrare problemi di codifica dei caratteri, ma se occorre
+generare documenti \TeX\ che contengono caratteri accentati (o comunque non
+appartenenti alla codifica ASCII) possono essere utili le indicazioni che
+seguono.
+
+\app{Gretl} genera l'output \TeX\ usando la codifica di caratteri impostata
+sul sistema locale. Se si usa una codifica appartenente alla famiglia
+ISO-8859 non dovrebbero esserci problemi, ma se si usa la codifica Unicode
+UTF-8 (impostazione predefinita su alcuni sistemi GNU/Linux recenti) occorre
+assicurarsi che il proprio sistema \TeX\ possa gestire l'input UTF-8, ossia
+installare il pacchetto \app{latex-ucs}, che potrebbe non essere stato
+installato automaticamente al momento dell'installazione di \TeX{}.
+
+Se \app{gretl} viene eseguito in un ambiente che usa la codifica UTF-8, vengono
+usate le seguenti righe nel preambolo dei file \TeX:
+%
+\begin{code}
+\usepackage{ucs}
+\usepackage[utf8x]{inputenc}
+\end{code}
+
+\section{Installazione e utilizzo di \TeX}
+\label{tex-install}
+
+Ovviamente in questa sede non è possibile fornire un'esposizione dettagliata di
+questi argomenti, ma solo alcuni riferimenti utili.
+
+Praticamente ogni distribuzione GNU/Linux comprende una serie di pacchetti per
+\TeX, che in alcuni casi sono anche installati per scelta predefinita. Si
+raccomanda di controllare la documentazione della propria distribuzione. Per
+quanto riguarda MS Windows, esistono varie versioni di \TeX: una delle più famose
+è MiK\TeX\, disponibile su \url{http://www.miktex.org/}. Per Mac OS X, una buona
+implementazione è i\TeX{}Mac, su \url{http://itexmac.sourceforge.net/}. Un punto
+di partenza essenziale per le risorse \TeX\ disponibili online è costituito dal
+Comprehensive \TeX\ Archive Network (CTAN) su \url{http://www.ctan.org/}.
+
+Per imparare \TeX, esistono molte guide utili, sia online che cartacee; in
+lingua italiana segnaliamo il sito del Gruppo Utenti Italiani di TeX e LaTeX:
+\url{http://www.guit.sssup.it/}.
+
+Un'eccellente fonte di livello avanzato è \emph{The \LaTeX\ Companion}
+(Goossens \textit{et al.}, 2004).
+
+
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "gretl-guide"
+%%% End: 

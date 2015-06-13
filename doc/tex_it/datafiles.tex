@@ -1,0 +1,802 @@
+\chapter{File di dati}
+\label{datafiles}
+
+\section{Formato interno}
+\label{native-format}
+
+\app{gretl} utilizza un suo formato interno per i file di dati. La maggior parte
+degli utenti probabilmente non è interessata a leggere o scrivere
+questi file con altri programmi, ma in alcune occasioni potrebbe essere utile
+farlo: per ulteriori dettagli si veda l'appendice~\ref{app-datafile}.
+
+\section{Altri formati dei file di dati}
+\label{other-formats}
+
+\app{gretl} legge anche file di dati in altri formati:
+    
+\begin{itemize}
+\item File di testo semplice (ASCII). Possono essere importati in
+  \app{gretl} usando il comando ``File, Apri dati, Importa
+  ASCII\dots{}'' dell'interfaccia grafica o il comando \cmd{import}
+  dell'interfaccia a riga di comando. Per ulteriori dettagli su questo
+  tipo di file, si veda la sezione~\ref{scratch}.
+\item File con valori separati da virgole (CSV).  Possono essere
+  importati in \app{gretl} usando il comando ``File, Apri dati,
+  Importa CSV\dots{}'' dell'interfaccia grafica o il comando
+  \cmd{import} dell'interfaccia a riga di comando.  Si veda anche
+  la sezione~\ref{scratch}.
+\item Fogli di calcolo: MS \app{Excel}, \app{Gnumeric} e Open Document
+  (ODS).  Possono essere importati in \app{gretl} con il comando ``File, Apri
+  dati, Importa''.  La sezione~\ref{scratch} descrive i requisiti per
+  questo tipo di file.
+\item File di dati di \app{Stata} (\texttt{.dta}).
+\item File di lavoro di \app{Eviews} (\texttt{.wf1}).\footnote{Si veda
+  \url{http://www.ecn.wfu.edu/eviews_format/}.}
+\item File di dati di \app{JMulTi}.
+\end{itemize}
+
+Quando vengono importati file in formato ASCII o CSV, \app{gretl}
+apre una finestra ``diagnostica'', che informa sullo stato della
+lettura dei dati. Se dovessero verificarsi dei problemi a causa di
+dati malformattati, questa finestra mostrerà dei suggerimenti per
+risolverli.
+
+Per venire incontro a chi vuole eseguire analisi più sofisticate,
+\app{gretl} offre la possibilità di salvare i dati nei formati usati
+dai programmi GNU \app{R}, \app{Octave}, \app{JMulTi} e \app{PcGive} 
+(si veda l'appendice~\ref{app-advanced}).  Nell'interfaccia grafica, questa
+opzione si trova nel menù ``File, Esporta dati'', mentre nel client a riga di
+comando occorre usare il comando \cmd{store} con l'opzione appropriata.
+
+\section{Database binari}
+\label{dbase}
+
+Per lavorare con grandi quantità di dati, \app{gretl} include una
+routine per operare su database binari. Un \emph{database}, al
+contrario di un \emph{file di dati}, non viene letto direttamente
+nello spazio di lavoro del programma, ma può contenere serie con
+frequenze e intervalli del campione diversi.  È possibile aprire un
+database, selezionare delle serie e importarle nel dataset corrente;
+le serie potranno poi essere salvate in un file di dati. È possibile
+accedere ai database attraverso il comando ``File, Database''.
+
+Per i dettagli sul formato dei database di \app{gretl}, si veda 
+l'appendice~\ref{app-datafile}.
+
+\subsection{Accesso ai database online}
+\label{online-data}
+
+Dalla versione 0.40, \app{gretl} è in grado di accedere ai database
+via internet. Alla Wake Forest University sono disponibili alcuni
+database, a cui è possibile accedere se il proprio computer è connesso
+a internet. Si veda la descrizione del comando ``data'' nel menù
+``Aiuto'' di \app{gretl}.
+
+\tip{Per dettagli e aggiornamenti sui dati disponibili, basta visitare la
+\href{http://gretl.sourceforge.net/gretl_data_it.html}{pagina dei dati} di
+\app{gretl}.}
+
+\subsection{Formati di database esterni}
+\label{RATS}
+
+Grazie a Thomas Doan di \emph{Estima}, che ha reso disponibili le specifiche
+del formato di database usato da RATS 4 (Regression Analysis of Time
+Series), \app{gretl} è in grado di gestire anche alcuni tipi di
+database RATS 4: per la precisione quelli che contengono dati mensili
+o trimestrali.
+
+\app{Gretl} può anche importare dati dai database \app{PcGive}. Questi sono
+costituiti da coppie di file, uno dei quali (con l'estensione \texttt{.bn7})
+contiene i dati veri e propri, mentre quello con estensione (\texttt{.in7})
+contiene informazioni supplementari.
+
+\section{Creazione di un file di dati}
+\label{scratch}
+
+Ci sono vari modi per compiere questa operazione.
+
+\begin{enumerate}
+\item Acquisire, o creare con un editor di testo, un file di testo
+  semplice ed aprirlo con il comando ``Importa ASCII'' di \app{gretl}.
+\item Usare il proprio foglio di lavoro per inserire i dati, salvarlo
+  in formato con valori separati da virgole (Comma Separated Values)
+  se necessario (non dovrebbe essere necessario se il programma di
+  foglio elettronico è MS Excel, Gnumeric o OpenOffice) e infine usare uno dei
+  comandi ``Importa'' di \app{gretl}.
+\item Usare il foglio elettronico contenuto in \app{gretl}.
+\item Selezionare le serie di dati da un database.
+\item Usare un editor di testo o altri programmi per creare un file di
+  dati nel formato interno di \app{gretl}.
+\end{enumerate}
+
+Seguono alcune note a proposito dei vari metodi presentati.
+
+\subsection{Note comuni sui dati importati}
+
+Le opzioni 1 e 2 richiedono di usare il comando ``import'' di
+\app{gretl}.  Affinché i dati vengano letti correttamente, occorre che
+siano soddisfatte alcune condizioni:
+
+\begin{itemize}
+
+\item La prima riga deve contenere nomi di variabile validi, ossia
+  lunghi al massimo 15 caratteri (i nomi di variabile più lunghi
+  verranno troncati a 15 caratteri), che iniziano con una lettera e
+  sono composti solo da caratteri alfanumerici e dal carattere
+  trattino basso, \verb+_+.  Precisazioni per i file ASCII o CSV: se
+  il file non contiene righe con i nomi delle variabili, il programma
+  userà automaticamente i nomi \verb+v1+, \verb+v2+ e così via.
+  Inoltre, per ``prima riga'' si intende la prima riga
+  \emph{significativa}: nel caso dei file ASCII e CSV, le righe
+  bianche e quelle che iniziano con un carattere cancelletto,
+  \verb+#+, vengono ignorate. Nel caso dell'importazione di file Excel
+  e Gnumeric, viene presentata una finestra di dialogo in cui è
+  possibile indicare il numero di righe e/o di colonne del foglio di
+  lavoro da ignorare.
+          
+\item I valori dei dati devono costituire un blocco rettangolare, con
+  una variabile per colonna e un'osservazione per riga.  Il numero
+  delle varibili (colonne dei dati) deve corrispondere al numero dei
+  nomi di variabile specificati.  Si veda anche la
+  sezione~\ref{missing-data}. Il programma si aspetta dati di tipo
+  numerico, ma nel caso di importazione da file ASCII/CSV, c'è un
+  supporto limitato per dati di tipo carattere (stringa): se una
+  colonna contiene solo dati di tipo stringa, le stringhe sono
+  sostituite da codici numerici progressivi, e quando l'importazione
+  si conclude, viene mostrata una tabella di corrispondenza tra
+  stringhe e codici.
+          
+\item Date (o marcatori per le osservazioni): opzionalmente, la
+  \emph{prima} colonna può contenere stringhe, come date o etichette
+  identificative per osservazioni su dati cross-section. Queste
+  stringhe possono essere lunghe al massimo 8 caratteri (come avviene
+  per le variabili, i nomi più lunghi verranno troncati), mentre la
+  colonna che le ospita dovrebbe avere come nome \verb+obs+ o
+  \verb+date+, oppure nessun nome.
+
+  Affinché una stringa sia riconosciuta come data, deve rispettare uno
+  dei formati seguenti: per le serie \emph{annuali}, l'anno deve
+  essere indicato con quattro cifre; per le serie \emph{trimestrali}
+  occorre indicare l'anno con quattro cifre, seguito da un separatore
+  (punto, due punti, o la lettera \verb+Q+) e da una cifra che indica
+  il trimestre, ad esempio: \verb+1997.1+, \verb+2002:3+,
+  \verb+1947Q1+; per le serie \emph{mensili} occorre indicare l'anno
+  con quattro cifre, seguito dal punto o dai due punti, e da due cifre
+  che indicano il mese, ad esempio: \verb+1997.01+, \verb+2002:10+.
+          
+\end{itemize}
+
+I file CSV possono usare virgole, spazi o tab come separatori fra le
+colonne: il separatore da usare può essere selezionato subito dopo
+aver eseguito il comando ``Importa CSV''. Se invece si usa ``Importa
+ASCII'' il programma cerca di riconoscere automaticamente il
+separatore usato nei dati. 
+
+Se si usa un foglio elettronico per preparare i dati, è possibile applicare
+varie trasformazioni ai dati ``grezzi'' (sommare variabili, calcolare
+percentuali, ecc.), ma queste elaborazioni possono essere compiute, forse più
+facilmente, anche in \app{gretl}, usando gli strumenti disponibili nel menù
+``Aggiungi''.
+
+\subsection{Importare dati e aggiungerli}
+
+Può essere necessario costruire un dataset di \app{gretl} a poco a
+poco, importando successivamente i dati da varie fonti. Questa
+funzionalità è fornita dai comandi del menù ``File, Aggiungi dati''.
+\app{gretl} controllerà che i nuovi dati siano compatibili con il
+dataset esistente e in caso positivo aggiungerà i nuovi dati. In
+questo modo è possibile aggiungere nuove variabili, a patto che la
+frequenza dei dati corrisponda a quella del dataset esistente. È anche
+possibile aggiungere nuove osservazioni per le serie di dati presenti
+nel dataset; in questo caso i nomi delle variabili devono
+corrispondere esattamente. Attenzione: se invece di ``Aggiungi dati''
+si sceglie ``Apri dati'', il dataset corrente verrà chiuso.
+        
+
+\subsection{Usare il foglio elettronico interno}
+
+È possibile creare un dataset con il comando ``File, Nuovo dataset'',
+scegliendo il tipo di dati (ad es. serie storiche trimestrali, dati
+cross-section), la data iniziale e quella finale (o il numero di osservazioni),
+e il nome della prima variabile da creare nel dataset. Dopo aver
+effettuato queste scelte, viene presentato un semplice foglio
+elettronico in cui è possibile iniziare a inserire i valori. Facendo
+clic col tasto destro nella finestra del foglio elettronico, comparirà
+un menù che permette di aggiungere una nuova variabile (colonna), di
+aggiungere una nuova osservazione (aggiungere una riga in fondo al
+foglio), o di inserire un'osservazione nel punto indicato (i dati
+sottostanti saranno spostati in basso e verrà inserita una riga
+vuota).
+
+Dopo aver inserito i dati nel foglio elettronico, è possibile
+importarli nel foglio di lavoro di \app{gretl} premendo il pulsante
+``Applica le modifiche'' nella finestra del foglio elettronico.
+
+Si noti che il foglio elettronico di \app{gretl} è molto semplice e
+non permette di inserire funzioni o formule: per trasformare i dati è
+possibile usare i comandi disponibili nei menù ``Aggiungi'' o
+``Variabile'' nella finestra principale di \app{gretl}.
+
+\subsection{Estrarre dati da un database}
+
+Un modo alternativo di creare un dataset consiste nel selezionare le
+variabili da un database.
+
+Selezionando il comando ``File, Database'', vengono presentate quattro alternative:
+``Gretl'', ``RATS 4'', ``PcGive'' e ``Sul server di gretl''. Selezionando ``Gretl'', si
+troverà il file \verb+fedstl.bin+, che contiene un'ampia raccolta di serie
+macroeconomiche USA ed è distribuito insieme al programma.
+
+Non si troverà nulla sotto ``RATS 4'' a meno di non aver acquistato
+dei dati RATS\footnote{Si veda
+  \href{http://www.estima.com/}{www.estima.com}}.  Se si possiedono
+dati RATS, occorre usare il comando ``Strumenti, Preferenze, Generali...'',
+selezionare la finestra Database e inserire il percorso completo dei
+propri file RATS.
+
+Se il proprio computer è connesso a internet è possibile accedere a
+vari database presenti alla Wake Forest University scegliendo ``Sul server di
+gretl''. È possibile consultare questi database da remoto, oppure
+installarli sul proprio computer. La finestra dei database ha una
+colonna che mostra, per ogni file, lo stato di installazione e lo
+stato di aggiornamento della copia locale rispetto alla versione
+disponibile alla Wake Forest.
+
+Dopo aver aperto un database è anche possibile importare singole serie
+nello spazio di lavoro di \app{gretl} usando il comando ``Serie, Importa''
+nella finestra del database, o nel menù che compare facendo clic col
+tasto destro, oppure trascinando la serie nella finestra principale
+del programma.
+        
+\subsection{Creare un file di dati nei formati interni di gretl}
+
+Se si hanno già molti dati archiviati in formato elettronico,
+l'approccio migliore può essere quello di creare un file di dati in
+uno dei formati interni di \app{gretl}, usando un editor di testo o
+altri programmi come \app{awk}, \app{sed} o \app{perl}. Ovviamente
+occorrerà studiare i formati di dati di \app{gretl} (il formato XML o
+quello ``tradizionale'') descritti nell'appendice~\ref{app-datafile}.
+
+
+\section{Struttura di un dataset}
+\label{sec:data-structure}
+
+Una volta che i dati sono stati letti da \app{gretl}, può essere necessario
+dover fornire alcune informazioni sulla natura dei dati stessi. Distinguiamo tre
+tipi di dataset:
+\begin{enumerate}
+\item Cross-section
+\item Serie storiche
+\item Dati panel
+\end{enumerate}
+
+Lo strumento principale per eseguire questa operazione è il comando del menù
+``Dati, Struttura Dataset'' nell'interfaccia grafica, o il comando
+\texttt{setobs} negli script e nell'interfaccia a riga di comando.
+
+\subsection{Dati cross-section}
+\label{sec:cross-section-data}
+
+Per ``dati cross-section'' intendiamo osservazioni su una serie di ``unità''
+(che possono essere imprese, paesi, individui, ecc.) realizzate nello stesso
+periodo temporale. Questa è l'interpretazione predefinita per un file di dati:
+se \app{gretl} non ha informazioni sufficienti per interpretare i dati come
+serie storiche o panel, essi sono automaticamente interpretati come
+cross-section. Nell'improbabile caso in cui dei dati cross-section siano
+interpretati come serie storiche, è possibile correggere l'errore usando il
+comando del menù ``Dati, Struttura dataset'', facendo clic sul pulsante
+``cross-section'', quindi su ``Avanti'', e infine su ``Ok''.
+
+\subsection{Serie storiche}
+\label{sec:timeser-data}
+
+Quando si importano dati da un foglio elettronico o da un file di testo,
+\app{gretl} cerca di estrarre tutte le informazioni temporali dalla prima
+colonna dei dati. Se tuttavia la struttura di serie storiche dei dati non è
+riconosciuta, è possibile usare il comando ``Dati, Struttura dataset'',
+selezionare ``Serie storiche'', e successivamente selezionare la frequenza dei
+dati e l'osservazione iniziale. In ogni momento è possibile fare clic su
+``Indietro'' per correggere le scelte fatte.
+
+È opportuna qualche considerazione ulteriore a proposito della frequenza dei
+dati. In un dataset di serie storiche, tutte le serie devono avere la stessa
+frequenza; se occorre creare un dataset combinando serie di diversa frequenza,
+ad esempio mensili e trimestrali, occorre procedere nel modo seguente.
+
+Per prima cosa occorre formulare una strategia: si desidera creare un dataset
+mensile o trimestrale? Un punto da tenere in considerazione consiste nel fatto
+che ``compattare'' i dati da una frequenza più alta (es. mensile) a una più
+bassa (es. trimestrale) di solito non presenta problemi. Ovviamente si perde
+informazione, ma in generale è accettabile, ad esempio, prendere la media di tre
+osservazioni mensili per creare un'osservazione trimestrale. D'altra parte,
+``espandere'' i dati da una frequenza minore a una maggiore, in generale non è
+un'operazione valida.
+
+Nella maggior parte dei casi, la strategia migliore consiste nel creare un
+dataset di frequenza \textit{inferiore}, e di compattare i dati a frequenza
+maggiore. Quando si importano i dati a frequenza maggiore nel dataset, il
+programma propone la scelta del metodo di compattamento (media, somma, valore
+all'inizio del periodo, o alla fine del periodo). Nella maggior parte dei casi,
+prendere la media dei dati è una scelta appropriata.
+
+È anche possibile importare dati di minore frequenza in un dataset a frequenza
+maggiore, ma non è una scelta raccomandabile in generale.
+In questi casi, \app{gretl} replica i valori della serie a frequenza minore per
+quante volte è richiesto dalla nuova frequenza. Ad esempio, ipotizzando di avere
+una serie trimestrale che vale 35.5 in 1990:1, il primo trimestre del 1990. Dopo
+l'espansione alla frequenza mensile, il valore 35.5 verrà assegnato alle
+osservazioni per i mesi di gennaio, febbraio e marzo del 1990. La variabile espansa
+non sarà quindi adatta per analisi temporali ``fini'', a meno che non si abbia
+buona ragione di ipotizzare che il suo valore rimanga costante nei sotto-periodi.
+
+Una volta scelta la frequenza di un dataset, \app{gretl} offre comunque la
+possibilità di compattare o espandere tutte le serie del dataset, usando i
+comandi ``Compatta dati'' ed ``Espandi dati'' del menù ``Dati'', che ovviamente
+vanno eseguiti con cautela.
+
+\subsection{Dati panel}
+\label{sec:panel-data}
+
+I dati panel possono essere visti sotto tre dimensioni, ossia le
+variabili, le unità cross-section e i periodi temporali. Ad esempio,
+un particolare valore in un dataset può essere identificato come l'osservazione
+della capitalizzazione di una certa azienda nel 1980.  Una nota terminologica:
+useremo i termini ``unità cross section'', ``unità'' e ``gruppo'' in modo
+intercambiabile per riferirci alle entità che compongono la dimensione cross
+section del panel, che potrebbero essere, ad esempio, aziende, paesi o
+individui.
+
+Per rappresentare i dati in un file testuale (e anche per poterli manipolare),
+queste tre dimensioni devono in qualche modo essere riportate a due.
+Questa procedura di ``appiattimento'' richiede di prendere degli
+``strati'' di dati che apparterrebbero alla terza dimensione e di
+impilarli nella dimensione verticale del file.
+
+\app{Gretl} si aspetta sempre di trovare dati organizzati ``per
+osservazione'', ossia in modo che ogni riga rappresenti un'osservazione
+(e che ogni variabile occupi esattamente una colonna). Alla luce di
+questo fatto, l'appiattimento dei dati panel può essere realizzato in
+due modi:
+
+\begin{itemize}
+\item Pila di dati cross section: ognuno dei blocchi di dati disposti
+  verticalmente contiene i valori per tutte le unità cross-section
+  in un determinato periodo.
+\item Pila di serie storiche: ognuno dei blocchi di dati disposti
+  verticalmente contiene serie storiche per una determinata unità
+  cross-section.
+\end{itemize}
+
+È possibile usare entrambi i metodi per inserire i dati. Internamente,
+\app{gretl} usa il formato ``pila di serie storiche'' per immagazzinare i dati.
+
+Quando si importano dati panel in \app{gretl} da un foglio di calcolo o
+da un file con valori separati da virgole, la struttura panel non verrà
+riconosciuta automaticamente (molto probabilmente i dati verranno
+trattati come ``non datati'').  Per imporre un'interpretazione panel ai
+dati, è possibile usare l'interfaccia grafica o il comando \cmd{setobs}.
+
+Nell'interfaccia grafica, occorre usare il comando dal menù ``Campione,
+Struttura dataset''. Nella prima finestra di dialogo occorre selezionare
+``Panel''; in quella successiva, si hanno tre scelte. Le prime due opzioni,
+``Pila di serie storiche'' e ``Pila di dati cross section'' sono utilizzabili
+se il dataset è già organizzato in uno di questi due modi. Selezionando una di
+queste due opzioni, il passo successivo è quello di indicare il numero di unità
+cross section nel dataset. La terza opzione ``Usa variabili indice'', è
+utilizzabile se il dataset contiene due variabili che indicizzano le unità e i
+periodi temporali; il passo successivo prevede di indicare queste due variabili.
+Ad esempio, un dataset potrebbe contenere una variabile con il codice dei paesi
+osservati e una variabile che rappresenta l'anno dell'osservazione. In questo
+caso, \app{gretl} riconoscerà la struttura panel dei dati a prescindere dal modo
+in cui le osservazioni sono organizzate.
+
+Il comando testuale \cmd{setobs} supporta delle opzioni che corrispondono a
+quelle viste sopra nell'interfaccia grafica. Se sono disponibili delle variabili indice,
+è possibile procedere nel modo seguente:
+%
+\begin{code}
+setobs var-unita var-tempo --panel-vars
+\end{code}
+%
+dove \texttt{var-unita} è una variabile che indicizza le unità e 
+\texttt{var-tempo} è una variabile che indicizza i periodi.
+Altrimenti, è possibile usare la sintassi \verb+setobs+ \textsl{freq} \verb+1:1+
+\textsl{struttura}, dove \textsl{freq} indica la ``dimensione dei blocchi'' di
+dati (ossia, il numero di periodi nel caso delle pile di serie storiche, o il
+numero di unità cross section nel caso di pila di dati cross section), mentre
+\textsl{struttura} può essere uguale a \verb+--stacked-time-series+ o
+\verb+--stacked-cross-section+. Di seguito vengono mostrati due esempi: il primo
+per un dataset panel sotto forma di pila di serie storiche con osservazioni per
+20 periodi, il secondo per un dataset panel sotto forma di pila di dati cross
+section, con 5 unità cross section.
+%
+\begin{code}
+setobs 20 1:1 --stacked-time-series
+setobs 5 1:1 --stacked-cross-section
+\end{code}
+
+\subsubsection{Dati panel organizzati per variabile}
+
+Talvolta i dati panel disponibili pubblicamente sono organizzati ``per variabile''.
+Si supponga di avere dati per due variabili, \varname{x1} e \varname{x2},
+relativi a 50 stati per 5 anni (per un totale di 250 osservazioni per
+variabile). Una possibile rappresentazione testuale dei dati potrebbe iniziare
+con un blocco per \varname{x1}, con 50 righe, corrispondenti agli stati e 5
+colonne, corrispondenti agli anni. Seguirebbe, sotto, un blocco con una
+struttura simile, relativo alla variabile \varname{x2}. Viene mostrato di seguito
+un frammento di questo file di dati, con osservazioni quinquennali per il
+periodo 1965--1985; occorre immaginare che la tabella continui per altri 48
+stati, seguita da altre 50 righe per la variabile \varname{x2}.
+
+\begin{center}
+  \begin{tabular}{rrrrrr}
+  \varname{x1} \\
+     & 1965 & 1970 & 1975 & 1980 & 1985 \\
+  AR & 100.0 & 110.5 & 118.7 & 131.2 & 160.4\\
+  AZ & 100.0 & 104.3 & 113.8 & 120.9 & 140.6\\
+  \end{tabular}
+\end{center}
+
+Se un tale file di dati viene importato in \app{gretl}\footnote{Si noti che
+  occorrerà fare alcune piccole modifiche al file affinché possa essere letto:
+  bisognerà rimuovere la riga che contiene il nome della variabile (in questo
+  esempio \varname{x1}) e la riga iniziale che contiene gli anni, altrimenti essi
+  verranno importati come valori numerici.}, il programma
+interpreterà le colonne come variabili diverse, rendendo inutilizzabili i dati.
+Esiste però un meccanismo per gestire queste situazioni, ossia la funzione
+\cmd{stack} del comando \cmd{genr}.
+
+Si consideri la prima colonna di dati nel frammento visto sopra: le prime 50
+righe di questa colonna costituiscono una cross-section per la variabile
+\varname{x1} nell'anno 1965. Se potessimo creare una nuova variabile sistemando
+le prime 50 voci nella seconda colonna direttamente sotto le prime 50 voci della
+prima colonna, staremmo costruendo un dataset disposto ``per osservazione'' (nel
+primo dei due sensi definiti in precedenza: una pila di dati cross-section).
+Ossia, avremmo una colonna che contiene una cross-section per \varname{x1} nel
+1965, seguita da una cross-section per la stessa variabile nel 1970.
+
+Il seguente script di gretl illustra come possiamo effettuare l'operazione, per
+\varname{x1} e \varname{x2}. Assumiamo che il file di dati originale si chiami
+\texttt{panel.txt} e che le colonne al suo interno siano precedute da
+intestazioni con i ``nomi variabile'' \varname{p1}, \varname{p2}, \dots, \varname{p5}
+(le colonne non sono vere variabili, ma per il momento ``facciamo finta'' che lo
+siano).
+
+\begin{code}
+open panel.txt
+genr x1 = stack(p1..p5) --length=50
+genr x2 = stack(p1..p5) --offset=50 --length=50
+setobs 50 1.01 --stacked-cross-section
+store panel.gdt x1 x2
+\end{code}
+
+La seconda riga illustra la sintassi della funzione \cmd{stack}.
+Il doppio punto nella parentesi indica un intervallo di variabili da impilare:
+vogliamo impilare tutte le 5 colonne (per tutti i 5 anni). Il dataset completo
+contiene 100 righe: per sistemare la variabile \varname{x1} vogliamo leggere solo
+le prime 50 righe di ogni colonna: facciamo questo aggiungendo l'opzione
+\verb+--length=50+. Si noti che se occorre impilare un insieme di colonne non
+contigue, è possibile usare un elenco separato da virgole all'interno della
+parentesi, come in
+
+\begin{code}
+genr x = stack(p1,p3,p5)
+\end{code}
+
+Nella riga 3 creiamo una pila di dati per la variabile \varname{x2}.  Ancora,
+vogliamo una lunghezza (\texttt{length}) di 50 per i componenti della serie
+impilata, ma questa volta vogliamo che gretl inizi a leggere dalla cinquantesima
+riga dei dati originali, quindi specifichiamo \verb+--offset=50+.
+La riga 4 impone un'interpretazione panel sui dati; infine, salviamo i dati in
+formato gretl, con un'interpretazione panel, eliminando le ``variabili''
+originali da \varname{p1} a \varname{p5}.
+
+Lo script di esempio visto sopra è appropriato quando il numero delle variabili
+da processare è piccolo. Quando ci sono molte variabili nel dataset, è più
+efficiente usare un comando loop per costruire le nuove variabili, come mostrato
+nell'esempio seguente, che ipotizza una situazione uguale a quella precedente
+(50 unità, 5 periodi) ma con 20 variabili invece che 2.
+
+\begin{code}
+open panel.txt
+loop for i=1..20
+  genr k = ($i - 1) * 50
+  genr x$i = stack(p1..p5) --offset=k --length=50
+endloop
+setobs 50 1.01 --stacked-cross-section
+store panel.gdt x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 \
+  x11 x12 x13 x14 x15 x16 x17 x18 x19 x20
+\end{code}
+
+\subsubsection{Marcatori nei dati panel}
+
+Quando si lavora con dati panel, può essere utile usare dei marcatori
+di facile memorizzazione per identificare le osservazioni. Per questo scopo
+esiste una funzione speciale da usare con il comando \texttt{genr}.
+
+Nell'esempio precedente, si supponga che tutti gli stati siano identificati con
+codici di due lettere, presenti nella colonna più a sinistra del file di dati
+originale. Quando si usa la funzione \cmd{stack}, questi codici verranno
+impilati assieme ai valori dei dati. Se la prima riga è marcata con \texttt{AR}
+per l'Arkansas, il marcatore \texttt{AR} verrà a trovarsi su ogni riga che
+contiene un'osservazione relativa all'Arkansas. Tutto bene, ma questi marcatori
+non danno alcuna informazione sulla data dell'osservazione. Per correggere la
+situazione potremmo eseguire:
+
+\begin{code}
+genr time
+genr year = 1960 + (5 * time)
+genr markers = "%s:%d", marker, year
+\end{code}
+
+La prima riga genera un indice che parte da 1 e rappresenta il periodo di ogni
+osservazione, mentre la seconda riga usa la variabile \texttt{time} per generare
+una variabile che rappresenta l'anno dell'osservazione. La terza riga contiene
+questa funzionalità speciale: se (e solo se) il nome della nuova ``variabile''
+da generare è \texttt{markers}, la parte del comando che segue il segno di
+uguaglianza viene interpretata come una stringa di formattazione nello stile del
+linguaggio C (andrà racchiusa tra virgolette doppie), seguita da una lista di
+argomenti separati da virgola. Gli argomenti verranno stampati seguendo la
+formattazione indicata e creeranno un nuovo insieme di marcatori per le
+osservazioni. È possibile indicare come argomento dei nomi di variabili del
+dataset, o la stringa \texttt{marker} che rappresenta il marcatore preesistente.
+Gli specificatori di formato più utili in questo contesto sono \texttt{\%s}
+per le stringhe e \texttt{\%d} per i numeri interi. Le stringhe possono essere
+troncate: ad esempio \texttt{\%.3s} indica di usare solo i primi tre caratteri
+della stringa. Per eliminare i caratteri iniziali da un marcatore esistente e
+costruirne un altro, si può usare la sintassi \texttt{marker + n}, dove
+\texttt{n} è un intero positivo: in questo caso, verranno omessi i primi
+\texttt{n} caratteri.
+
+Dopo aver eseguito i comandi visti sopra, i marcatori delle osservazioni
+appariranno come, ad esempio, \texttt{AR:1965}, ossia, il codice a due lettere
+relativo allo stato, seguito dall'anno dell'osservazione, uniti da un carattere
+due punti.
+
+\section{Valori mancanti nei dati}
+\label{missing-data}
+
+I valori mancanti vengono rappresentati internamente come
+\verb+DBL_MAX+, il più alto numero in virgola mobile rappresentabile
+sul sistema (che è probabile sia almeno 10 alla trecentesima potenza,
+e non va interpretato come un valore legittimo dei dati).  Nei file di
+dati in formato interno vanno rappresentati come \verb+NA+, mentre se
+si importano dati in formato CSV \app{gretl} riconosce alcuni modi
+comuni di rappresentare i valori mancanti: $-$999, la stringa
+\verb+NA+ (in maiuscolo o minuscolo), un singolo punto, o
+semplicemente una stringa vuota. Queste ultime, ovviamente, vanno
+delimitate in modo opportuno, ad es. \verb+120.6,,5.38+ indica che il
+valore di mezzo è mancante.
+
+Per quanto riguarda il trattamento dei valori mancanti durante le
+analisi statistiche, \app{gretl} si comporta nel modo seguente:
+
+\begin{itemize}
+\item Nel calcolo delle statistiche descrittive (media, scarto quadratico
+  medio, ecc.) con il comando \cmd{summary}, i valori mancanti sono
+  semplicemente ignorati, e la dimensione del campione viene corretta
+  adeguatamente.
+\item Nel calcolo delle regressioni, \app{gretl} per prima cosa
+  corregge l'inizio e la fine del campione, troncandolo dove occorre.
+  Ad esempio, possono esserci dei valori mancanti all'inizio del
+  campione perché la regressione comprende serie differenziate,
+  ritardate e così via. Oppure i valori mancanti possono trovarsi alla
+  fine del campione, a causa della compresenza di serie con diverso
+  livello di aggiornamento, o di serie anticipate.
+\end{itemize}
+
+Se \app{gretl} trova dei valori mancanti ``all'interno''
+dell'intervallo del campione per una regressione (che può anche essere
+troncato), il risultato dipende dal tipo di dataset e dallo stimatore
+scelto. In molti casi, il programma eseguirà le stime saltando
+automaticamente le osservazioni che contengono valori mancanti,
+emettendo un messaggio che indica quante osservazioni sono state
+escluse. Tuttavia, ci sono procedure che non saltano automaticamente
+le osservazioni mancanti: tutti gli stimatori autoregressivi, gli
+stimatori di sistema (come il SUR) e i minimi quadrati non lineari.
+Nel caso di dati panel, l'esclusione automatica delle osservazioni
+mancanti avviene solo se il dataset risultante costituisce un panel
+"bilanciato". In tutti i casi in cui l'esclusione automatica delle
+osservazioni mancanti non è supportata, \app{gretl} emette un
+messaggio di errore e non produce stime.  
+
+In tutti i casi problematici dovuti a valori mancanti all'interno di
+un dataset, è possibile ricorrere alla funzione \cmd{misszero} (da
+usare con cautela!) del comando \cmd{genr}. Eseguendo \cmd{genr pippo
+  = misszero(pluto)} è possibile produrre la serie \cmd{pippo}, che è
+identica a \cmd{pluto}, tranne per il fatto che tutti i valori
+mancanti sono stati trasformati in zeri. In seguito, costruendo
+opportunamente delle variabili dummy, sarà possibile eliminare dalla
+regressione le osservazioni che contengono valori mancanti, pur
+mantenendo lo stesso intervallo del campione.\footnote{\cmd{genr}
+  offre anche la funzione inversa di \cmd{misszero}, ossia
+  \cmd{zeromiss}, che sostituisce in una serie i valori zero con il
+  codice per i valori mancanti.}
+
+\section{Dimensione massima dei dataset}
+\label{data-limits}
+
+La dimensione dei dataset (sia in termini di numero di variabili che di
+osservazioni) è sostanzialmente limitata solo dalle caratteristiche del
+computer. \app{Gretl} alloca la memoria dinamicamente e chiede al sistema
+operativo tutta la memoria richiesta dai dati. Quindi un limite insuperabile
+è dato dalla dimensione della memoria RAM.
+
+Escludendo il comando OLS a precisione multipla, gretl di solito usa numeri in
+virgola mobile in precisione doppia. La dimensione in byte di questi numeri
+dipende dalla piattaforma, ma tipicamente è pari a otto. Per farsi un'idea delle
+grandezze in gioco, ipotizzando di avere un dataset con 10.000 osservazioni su
+500 variabili, si avranno 5 milioni di numeri in virgola mobile, ossia 40
+milioni di byte.  Definendo il megabyte (MB) come $1024 \times 1024$ byte, come
+si è soliti fare parlando di memoria RAM, la memoria occupata sarà di circa 38
+MB. Il programma richiede ulteriore memoria anche per lo spazio di lavoro, ma,
+anche tenendo conto di questo fatto, la gestione di un dataset di queste
+dimensioni è fattibile su un PC moderno, che ha tipicamente almeno 256 MB di
+RAM.
+
+Se la RAM non pone problemi, c'è un'altra limitazione sulla dimensione dei dati,
+che però difficilmente diventa un vincolo stringente: le variabili e le
+osservazioni sono indicizzate usando numeri interi col segno, che un tipico PC
+memorizza come valori a 32 bit, avendo quindi un limite massimo pari a
+2.147.483.647.
+
+Questi limiti si applicano alle funzionalità ``interne'' di \app{gretl}.
+Ci sono limiti più stringenti per quanto riguarda due programmi esterni che sono
+disponibili come aggiunte a \app{gretl} per alcuni tipi di analisi delle
+serie storiche, ossia \app{TRAMO/SEATS} e \app{X-12-ARIMA}. Questi programmi
+utilizzano un meccanismo di allocazione della memoria a dimensione fissa e
+quindi non possono gestire serie più lunghe di 600 osservazioni.
+
+
+\section{Raccolte di file di dati}
+\label{collections}
+
+Se si usa \app{gretl} nell'attività didattica, può essere utile creare
+una raccolta di file di dati e/o di script di comandi, personalizzati
+per il proprio corso, ad uso degli studenti.
+
+A partire dalla versione 1.2.1 di \app{gretl}, ci sono tre modi per accedere a
+una raccolta di file:
+
+\begin{itemize}
+\item Per i file di dati: selezionare dal menù ``File, Apri dati, File
+  di esempio'', o fare clic sull'icona a forma di cartella sulla barra
+  degli strumenti di \app{gretl}.
+\item Per i file di comandi: selezionare dal menù ``File, Comandi, File
+  di esempio''.
+\end{itemize}
+
+Quando un utente seleziona uno dei comandi visti sopra:
+
+\begin{itemize}
+\item Vengono elencati automaticamente i file di dati o di comandi
+  inclusi nella distribuzione di gretl (che comprendono i file
+  relativi a \emph{Introductory Econometrics} di Ramanathan e a
+  \emph{Econometric Analysis} di Greene).
+\item Il programma cerca alcune raccolte di dati opzionali, ad esempio
+  i file relativi ad alcuni libri di testo (Davidson e MacKinnon, Gujarati,
+  Stock e Watson, Verbeek, Wooldridge) e la Penn World Table (PWT 5.6). Si veda
+  \href{http://gretl.sourceforge.net/gretl_data_it.html}{la pagina dei
+    dati} sul sito web di gretl per ulteriori informazioni su queste
+  raccolte. Se queste raccolte vengono trovate, vengono aggiunte
+  all'elenco dei file disponibili.
+\item Il programma infine cerca delle raccolte di dati (non
+  necessariamente note) nei posti seguenti: la directory ``di
+  sistema'' dei file di dati, la directory di sistema dei file di
+  comandi, la directory utente e tutte le loro sotto-directory di
+  primo livello. Valori tipici per i nomi di queste directory sono
+  mostrati nella tabella~\ref{tab-colls}. Si noti che 
+  \texttt{PERSONAL} è una parola chiave che viene espansa da Windows,
+  ad esempio in ``My Documents'' se sul sistema è impostata la lingua inglese.
+\end{itemize}
+
+\begin{table}[htbp]
+    \begin{center}
+    \begin{tabular}{>{\raggedright\arraybackslash}p{2in}ll}
+        & \multicolumn{1}{c}{\textit{Linux}} & 
+        \multicolumn{1}{c}{\textit{MS Windows}} \\
+        Directory di sistema per i dati & 
+        {\small \verb+/usr/share/gretl/data+} &
+        {\small \verb+c:\Program Files\gretl\data+} \\
+        Directory di sistema per i comandi & 
+        {\small \verb+/usr/share/gretl/scripts+} &
+        {\small \verb+c:\Program Files\gretl\scripts+} \\
+        Directory utente &
+        {\small \verb+$HOME/gretl+} &
+        {\small \verb+PERSONAL\gretl+}\\
+      \end{tabular}
+    \end{center}
+    \caption{Posizioni tipiche delle raccolte di file}
+    \label{tab-colls}
+  \end{table}
+
+Le raccolte trovate verranno aggiunte all'elenco dei file
+disponibili. In che formato deve essere una raccolta per essere
+riconosciuta come tale? Una raccolta può essere costituita da un
+gruppo di file di dati di \app{gretl} in formato XML (con
+l'estensione \verb+.gdt+) o da un gruppo di file di comandi (con
+l'estensione \verb+.inp+), in entrambi i casi accompagnati da un
+``file principale'' o catalogo.  La distribuzione di \app{gretl}
+contiene vari esempi di file di catalogo, ad esempio il file
+\verb+descriptions+ nella sottodirectory \verb+misc+ della directory
+dati di \app{gretl} e il file \verb+ps_descriptions+ nella
+sottodirectory \verb+misc+ della directory dei comandi.  
+
+Se si intende aggiungere una propria raccolta, occorrerà creare dei
+file di catalogo, chiamati \verb+descriptions+ per i file di dati, e
+\verb+ps_descriptions+ per i file di comandi, nelle rispettive
+directory (ad es.  \url{/usr/share/gretl/data/mydata} o
+\verb+c:\userdata\gretl\data\mydata+).
+
+La sintassi dei file di catalogo (che sono file di testo) è
+semplice; ecco ad esempio le prime righe del catalogo della raccolta
+di file di dati ``misc'' inclusa nella distribuzione di gretl:
+
+\begin{code}
+# Gretl: various illustrative datafiles
+"arma","artificial data for ARMA script example"
+"ects_nls","Nonlinear least squares example"
+"hamilton","Prices and exchange rate, U.S. and Italy"
+\end{code}
+
+La prima riga, che deve iniziare con un carattere cancelletto,
+contiene un nome breve, qui ``Gretl'', che comparirà come etichetta
+identificativa per questa raccolta nella finestra di selezione dei
+dati, seguito da una virgola e da una descrizione breve della
+raccolta (opzionale).
+
+Le righe seguenti contengono due elementi, separati da una virgola e
+racchiusi tra virgolette doppie. Il primo è il nome del file di dati
+(escludendo l'estensione \verb+.gdt+), mentre il secondo è una breve
+descrizione del contenuto del file di dati. Dovrebbe esserci una
+riga come questa per ogni file di dati della raccolta.
+
+I file di catalogo per le raccolte di file di comandi sono molto
+simili a quelli appena visti, tranne per il fatto che ogni riga del
+file contiene tre campi: il nome del file (senza l'estensione
+\verb+.inp+), una breve descrizione del significato econometrico
+della serie di comandi contenuti nel file e una breve descrizione
+dei dati usati. Ecco un altro esempio: le prime righe del catalogo
+della raccolta di file di comandi ``misc'' inclusa nella
+distribuzione di gretl:
+
+\begin{code}
+# Gretl: various sample scripts
+"arma","ARMA modeling","artificial data"
+"ects_nls","Nonlinear least squares (Davidson)","artificial data"
+"leverage","Influential observations","artificial data"
+"longley","Multicollinearity","US employment"
+\end{code}
+
+La procedura per creare la propria raccolta di dati e renderla
+disponibile agli utenti è la seguente:
+
+\begin{enumerate}
+\item Assemblare i dati, nel formato più comodo.
+\item Convertire i dati in formato \app{gretl} e salvarli come file
+  \verb+gdt+. Probabilmente il modo più semplice consiste
+  nell'importare i dati nel programma come testo semplice, CSV o
+  formato foglio elettronico (MS Excel o Gnumeric) e quindi
+  salvarli. Può essere utile aggiungere delle descrizioni delle
+  singole variabili (usando il comando ``Variabile, Modifica
+  attributi'') e delle informazioni sulle fonti dei dati (usando il
+  comando ``Dati, Modifica descrizione'').
+\item Scrivere un file di catalogo per la raccolta, usando un editor
+  di testi.
+\item Copiare i file di dati e il file di catalogo in una
+  sottodirectory della directory dei dati (o utente) di \app{gretl}.
+\item Se la raccolta deve essere distribuita ad altri utenti, creare
+  un pacchetto contenente i file di dati e il catalogo, ad esempio
+  sotto forma di file zip.
+\end{enumerate}
+
+Se la raccolta creata non contiene dati proprietari, è possibile
+inviarla al curatore di \app{gretl} in modo che venga resa
+disponibile a tutti gli utenti del programma come pacchetto dati
+opzionale.
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "gretl-guide-it"
+%%% End: 
+

@@ -1,0 +1,14 @@
+<html><head><title>gretl changelog</title>
+<LINK REL=STYLESHEET TYPE="text/css" HREF="./css-gretl.html">
+</head>
+<body>
+
+<p>
+[<a href="http://gretl.cvs.sourceforge.net/gretl/gretl/">Browse CVS</a>]
+[<a href="./index.html">gretl main page</a>]
+</p>
+
+<h1>gretl changelog</h1>
+
+<p>We also have a <a href="./Backward.html">log of backward-incompatible 
+ changes</a>.</p>

@@ -1,0 +1,71 @@
+\chapter{L'interfaccia a riga di comando}
+\label{cli}
+
+\section{Gretl sul terminale}
+\label{cli-console}
+
+Il pacchetto \app{gretl} include il programma a riga di comando
+\app{gretlcli}. Su Linux è possibile eseguirlo in una finestra di terminale
+(xterm, rxvt, o simili), o in un terminale testuale. Su MS Windows può essere
+eseguito in una finestra di terminale (quella che di solito viene chiamata
+``prompt di MS-DOS'').  \app{gretlcli} ha un file di aiuto, a cui si
+accede inserendo il comando ``help'' al prompt. Inoltre, può essere
+usato in modalità batch, inviando i risultati direttamente a un file
+(si veda la \GCR).
+    
+Se \app{gretlcli} è linkato alla libreria \app{readline} (ciò avviene
+automaticamente nella versione MS Windows, si veda anche
+l'appendice~\ref{app-build}), è possibile richiamare e modificare i
+comandi già eseguiti, inoltre è disponibile il completamento
+automatico dei comandi. Per muoversi nella lista dei comandi già
+eseguiti è possibile usare i tasti Freccia Su/Giù, mentre per muoversi
+sulla riga di comando è possibile usare i tasti Freccia a
+destra/sinistra e le scorciatoie in stile Emacs\footnote{Questi sono i valori
+  predefiniti per le scorciatoie da tastiera, che possono essere modificate
+  seguendo le istruzioni contenute nel
+  \href{http://cnswww.cns.cwru.edu/~chet/readline/readline.html}{manuale
+    di readline}.}. Le scorciatoie più usate sono:
+%    
+\begin{center}
+  \begin{tabular}{ll}
+    \textit{Scorciatoia} & \textit{Effetto}\\
+    \verb+Ctrl-a+ & Va all'inizio della riga\\
+    \verb+Ctrl-e+ & Va alla fine della riga\\
+    \verb+Ctrl-d+ & Cancella il carattere a destra\\
+  \end{tabular}
+\end{center}
+%
+dove ``\verb+Ctrl-a+'' significa premere il tasto ``\verb+a+'' mentre
+si tiene premuto il tasto ``\verb+Ctrl+''.  Quindi se si vuole
+correggere qualcosa all'inizio della riga di comando, \emph{non
+  occorre} usare il tasto di cancellazione all'indietro su tutta la
+riga, basta saltare all'inizio della riga e aggiungere o cancellare i
+caratteri desiderati.  Inserendo le prime lettere del nome di un
+comando e premendo il tasto Tab, readline cercherà di completare
+automaticamente il nome del comando. Se esiste un solo modo di
+completare le lettere inserite, verrà inserito il comando
+corrispondente, altrimenti premendo Tab una seconda volta verrà
+visualizzata una lista delle alternative possibili.
+    
+\section{La modalità non interattiva}
+\label{cli-syntax}
+
+Probabilmente, il modo più utile per svolgere grosse quantità di lavoro con
+\app{gretlcli} consiste nell'utilizzare la modalità ``batch'' (non interattiva),
+in cui il programma legge ed esegue uno script di comandi, scrivendo il
+risultato su un file. Ad esempio:
+
+\begin{code}
+gretlcli -b filescript > fileoutput
+\end{code}
+
+Il \textsl{filescript} fornito come argomento al programma deve specificare al
+proprio interno il file di dati su cui operare, usando il comando
+\cmd{open filedati}. Se non si utilizza l'opzione \texttt{-b} (che sta per ``batch''),
+il programma resterà in attesa di input al termine dell'esecuzione dello script.
+    
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "gretl-guide-it"
+%%% End: 
+

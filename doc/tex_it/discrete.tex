@@ -1,0 +1,339 @@
+\chapter{Variabili discrete}
+\label{chap:discrete}
+
+Quando una variabile può assumere solo un numero finito, tipicamente basso, di
+valori, essa si può chiamare \emph{discreta}. Alcuni comandi di
+\app{gretl} si comportano in modo leggermente diverso quando sono usati su
+variabili discrete; in più, \app{gretl} fornisce alcuni comandi che si applicano
+solo alle variabili discrete. Nello specifico, i comandi \texttt{dummify}
+e \texttt{xtab} (si veda oltre) sono disponibili solo per variabili discrete,
+mentre il comando \texttt{freq} (distribuzione di frequenza) produce risultati
+differenti nel caso di variabili discrete.
+
+
+
+\section{Dichiarazione delle variabili discrete}
+\label{discr-declare}
+
+\app{Gretl} usa una semplice euristica per decidere se una variabile deve essere
+considerata come discreta, ma è anche possibile marcare esplicitamente una
+variabile come discreta, nel qual caso il controllo automatico non viene
+eseguito.
+
+L'euristica è la seguente: per prima cosa si controlla se tutti i valori della
+variabile sono ``abbastanza arrotondati'', ossia se sono almeno multipli interi
+di 0.25; se questa condizione è soddisfatta, si controlla se la variabile assume
+un numero di valori distinti che sia ``abbastanza piccolo'', per la precisione
+uguale o minore di 8. Se entrambe le condizioni sono soddisfatte, la variabile
+viene automaticamente considerata come discreta.
+
+Se invece si vuole marcare esplicitamente una variabile come discreta, ci sono
+due modi:
+\begin{enumerate}
+\item Dall'interfaccia grafica, selezionare ``Variabile, Modifica attributi''
+  dal menù. Apparirà una finestra di dialogo che, se la variabile sembra adatta,
+  contiene la casella ``Tratta questa variabile come discreta''.
+  La stessa finestra di dialogo può essere richiamata dal menù contestuale
+  (facendo clic col tasto destro su una variabile) o premendo il tasto F2;
+\item Dall'interfaccia a riga di comando, usando il comando \texttt{discrete}.
+  Il comando accetta uno o più argomenti, che possono essere variabili o liste
+  di variabili. Ad esempio:
+\begin{code}
+list xlist = x1 x2 x3
+discrete z1 xlist z2
+\end{code}
+In questo modo è possibile dichiarare più variabili discrete con un solo
+comando, cosa che al momento non è possibile fare usando l'interfaccia grafica.
+L'opzione \texttt{--reverse} inverte la dichiarazione, ossia rende continua una
+variabile discreta.
+Ad esempio:
+\begin{code}
+discrete pippo
+# ora pippo è discreta
+discrete pippo --reverse
+# ora piipo è continua
+\end{code}
+\end{enumerate}
+
+La variante a riga di comando è più potente, visto che consente di marcare una
+variabile come discreta anche se non viene giudicata adatta dal programma per
+questa trasformazione.
+
+Si noti che marcare una variabile come discreta non ne modifica il contenuto. È
+quindi responsabilità dell'utente usare correttamente questa funzione. Per
+ricodificare una variabile continua in classi, è possibile usare il comando
+\texttt{genr} e le sue funzioni aritmetiche come nell'esempio seguente:
+\begin{code}
+nulldata 100
+# genera una variabile con media 2 e varianza 1
+genr x = normal() + 2
+# suddivide in 4 classi
+genr z = (x>0) + (x>2) + (x>4)
+# ora dichiara z come discreta
+discrete z
+\end{code}
+
+Quando si marca una variabile come discreta, questa impostazione viene ricordata
+dopo il salvataggio del file.
+
+\section{Comandi per le variabili discrete}
+\label{discr-commands}
+
+\subsection{Il comando \texttt{dummify}}
+\label{discr-dummify}
+
+Il comando \texttt{dummify} prende come argomento una serie $x$ e crea delle
+variabili dummy per ognuno dei valori distinti presenti in $x$, che deve essere
+stata dichiarata discreta in precedenza. Ad esempio:
+\begin{code}
+open greene22_2
+discrete Z5 # marca Z5 come discreta
+dummify Z5
+\end{code}
+
+L'effetto di questi comandi è quello di generare 5 nuove variabili dummy, i cui
+nomi vanno da \texttt{DZ5\_1} fino a \texttt{DZ5\_5}, che corrispondono ai
+diversi valori presenti in \texttt{Z5}. Ossia, la variabile
+\texttt{DZ5\_4} vale 1 dove \texttt{Z5} vale 4, e 0 altrove. Questa funzionalità
+è disponibile anche nell'interfaccia grafica, con il comando del menù
+``Aggiungi, dummy per le variabili discrete selezionate''.
+
+Il comando \texttt{dummify} può essere usato anche con la sintassi seguente:
+\begin{code}
+list dlist = dummify(x)
+\end{code}
+In questo modo, vengono create non solo le variabili dummy, ma anche una lista
+che può essere usata in seguito (si veda la sezione~\ref{named-lists}).
+L'esempio seguente calcola le statistiche descrittive per la variabile
+\texttt{Y} in corrispondenza di ogni valore di \texttt{Z5}:
+\begin{code}
+open greene22_2
+discrete Z5 # marca Z5 come discreta
+list foo = dummify(Z5)
+loop foreach i foo
+  smpl $i --restrict --replace
+  summary Y
+end loop
+smpl full
+\end{code}
+% $
+
+Poiché \texttt{dummify} genera una lista, può essere usato direttamente in
+comandi che accettano una lista come input, come \texttt{ols}.
+Ad esempio:
+\begin{code}
+open greene22_2
+discrete Z5 # marca Z5 come discreta
+ols Y 0 dummify(Z5)
+\end{code}
+
+\subsection{Il comando \texttt{freq}}
+\label{discr-freq}
+
+Il comando \texttt{freq} mostra le frequenze assolute e relative per una
+variabile. Il modo in cui le frequenze vengono calcolate dipende dal carattere
+discreto o continuo della variabile. Questo comando è disponibile anche
+nell'interfaccia grafica, usando il comando del menù ``Variabile, Distribuzione
+di frequenza''.
+
+Per variabili discrete, le frequenze sono contate per ogni diverso valore
+assunto dalla variabile. Per le variabili continue, i valori sono raggruppati in
+``classi'' e quindi le frequenze sono calcolate per ogni classe.
+Per impostazione predefinita, il numero di classi è calcolato in funzione del
+numero di osservazioni valide nel campione selezionato al momento, come mostrato
+nella Tabella~\ref{tab:bins}, ma quando il comando viene invocato attraverso la
+voce del menù ``Variabile, Grafico frequenze'', questa impostazione può essere
+modificata dall'utente.
+
+
+\begin{table}[htbp]
+  \centering
+  \begin{tabular}{cc}
+\hline
+  Osservazioni & Classi \\
+\hline
+  $8 \le n < 16$ & 5 \\
+  $16 \le n < 50 $ & 7 \\
+  $50 \le n \le 850 $ & $\lceil \sqrt{n} \rceil$  \\
+  $n > 850 $ & 29 \\
+\hline
+\end{tabular}
+\caption{Numero di classi per varie ampiezze campionarie}
+\label{tab:bins}
+\end{table}
+
+Ad esempio, il codice seguente
+%
+\begin{code}
+open greene19_1
+freq TUCE
+discrete TUCE # marca TUCE come discreta
+freq TUCE
+\end{code}
+%
+produce questo risultato
+%
+\begin{code}
+Lettura del file dati /usr/local/share/gretl/data/greene/greene19_1.gdt
+Periodicità: 1, oss. max.: 32,
+Intervallo delle osservazioni: 1-32
+
+5 variabili elencate:
+  0) const    1) GPA      2) TUCE     3) PSI      4) GRADE  
+
+? freq TUCE
+
+Distribuzione di frequenza per TUCE, oss. 1-32
+Numero di intervalli = 7, media = 21,9375, scarto quadratico medio = 3,90151
+
+       Intervallo        P.med.  Frequenza    Rel.     Cum.
+
+          <  13,417     12,000        1      3,12%    3,12% *
+    13,417 - 16,250     14,833        1      3,12%    6,25% *
+    16,250 - 19,083     17,667        6     18,75%   25,00% ******
+    19,083 - 21,917     20,500        6     18,75%   43,75% ******
+    21,917 - 24,750     23,333        9     28,12%   71,88% **********
+    24,750 - 27,583     26,167        7     21,88%   93,75% *******
+          >= 27,583     29,000        2      6,25%  100,00% **
+
+Test per l'ipotesi nulla di distribuzione normale:
+Chi-quadro(2) = 1,872 con p-value 0,39211
+
+? discrete TUCE # marca TUCE come discreta
+
+? freq TUCE
+Distribuzione di frequenza per TUCE, oss. 1-32
+
+          Frequenza    Rel.     Cum.
+
+  12           1      3,12%    3,12% *
+  14           1      3,12%    6,25% *
+  17           3      9,38%   15,62% ***
+  19           3      9,38%   25,00% ***
+  20           2      6,25%   31,25% **
+  21           4     12,50%   43,75% ****
+  22           2      6,25%   50,00% **
+  23           4     12,50%   62,50% ****
+  24           3      9,38%   71,88% ***
+  25           4     12,50%   84,38% ****
+  26           2      6,25%   90,62% **
+  27           1      3,12%   93,75% *
+  28           1      3,12%   96,88% *
+  29           1      3,12%  100,00% *
+
+Test per l'ipotesi nulla di distribuzione normale:
+Chi-quadro(2) = 1,872 con p-value 0,39211
+\end{code}
+%
+Come si può vedere dall'esempio, viene calcolato automaticamente un test
+Doornik--Hansen per la normalità. Il test è soppresso per le variabili discrete
+che assumono un numero di valori distinti minore di 10.
+
+Questo comando accetta due opzioni: \texttt{--quiet}, per evitare la stampa
+dell'istogramma, e \texttt{--gamma}, per sostituire il test di normalità con
+il test non parametrico di Locke, la cui ipotesi nulla è che i dati seguano una
+distribuzione Gamma.
+ 
+Se occorre salvare i valori distinti di una variabile discreta, è possibile
+usare il comando matriciale \texttt{values()} (si veda il capitolo
+\ref{chap:matrices}).
+
+
+\subsection{Il comando \texttt{xtab}}
+\label{discr-xtab}
+
+Il comando \texttt{xtab} può essere invocato in uno dei due modi seguenti.
+Per primo:
+%
+\begin{code}
+xtab lista-y ; lista-x
+\end{code}
+%
+dove \texttt{lista-y} e \texttt{lista-x} sono liste di variabili discrete;
+esso produce tabulazioni incrociate per ognuna delle variabili nella
+\texttt{lista-y} (per riga) rispetto a ognuna delle variabili nella
+\texttt{lista-x} (per colonna).  In secondo luogo:
+%
+\begin{code}
+xtab lista-x
+\end{code}
+%
+In questo secondo caso, viene generata una tabulazione incrociata completa,
+ossia ogni variabile nella \texttt{lista-x} è tabulata rispetto ad ogni altra
+variabile. Nell'interfaccia grafica, questo comando è utilizzabile attraverso la
+voce ``Tabulazione incrociata'' nel menù Visualizza, che è attiva se sono state
+selezionate almeno due variabili.
+
+Ecco un esempio di uso:
+%
+\begin{code}
+open greene22_2
+discrete Z* # Marca Z1-Z8 come discrete
+xtab Z1 Z4 ; Z5 Z6
+\end{code}
+che produce questo risultato
+\begin{code}
+Tabulazione incrociata di Z1 (righe) rispetto a Z5 (colonne)
+
+       [   1][   2][   3][   4][   5]  TOT.
+  
+[   0]    20    91    75    93    36    315
+[   1]    28    73    54    97    34    286
+
+TOTALE    48   164   129   190    70    601
+
+Test chi-quadro di Pearson = 5,48233 (4 df, p-value = 0,241287)
+
+Tabulazione incrociata di Z1 (righe) rispetto a Z6 (colonne)
+
+       [   9][  12][  14][  16][  17][  18][  20]  TOT.
+  
+[   0]     4    36   106    70    52    45     2    315
+[   1]     3     8    48    45    37    67    78    286
+
+TOTALE     7    44   154   115    89   112    80    601
+
+Test chi-quadro di Pearson = 123,177 (6 df, p-value = 3,50375e-24)
+
+Tabulazione incrociata di Z4 (righe) rispetto a Z5 (colonne)
+
+       [   1][   2][   3][   4][   5]  TOT.
+  
+[   0]    17    60    35    45    14    171
+[   1]    31   104    94   145    56    430
+
+TOTALE    48   164   129   190    70    601
+
+Test chi-quadro di Pearson = 11,1615 (4 df, p-value = 0,0248074)
+
+Tabulazione incrociata di Z4 (righe) rispetto a Z6 (colonne)
+
+       [   9][  12][  14][  16][  17][  18][  20]  TOT.
+  
+[   0]     1     8    39    47    30    32    14    171
+[   1]     6    36   115    68    59    80    66    430
+
+TOTALE     7    44   154   115    89   112    80    601
+
+Test chi-quadro di Pearson = 18,3426 (6 df, p-value = 0,0054306)
+\end{code}
+
+Il test $\chi^2$ di Pearson per l'indipendenza viene mostrato automaticamente, a
+patto che tutte le celle abbiano frequenze attese nell'ipotesi di indipendenza
+pari almeno a $10^{-7}$. Poiché spesso si considera valida questa statistica se
+la frequenza attesa nell'ipotesi di indipendenza supera 5 per almeno l'80 per
+cento delle celle, se questa condizione non è soddisfatta, viene mostrato un
+messaggio di avvertimento.
+
+Inoltre, le opzioni \texttt{--row} o \texttt{--column} fanno in modo che vengano
+mostrate le percentuali di riga o di colonna.
+
+Se si vuole incollare il risultato di \texttt{xtab} in qualche altra
+applicazione, ad esempio un foglio di calcolo, è utile usare l'opzione
+\texttt{--zeros}, che scrive il numero zero nelle celle con frequenza pari a
+zero, invece di lasciarle vuote.
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "gretl-guide"
+%%% End: 

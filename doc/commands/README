@@ -1,0 +1,64 @@
+This directory contains the mechanism for auto-generating the 
+gretl "online" helpfiles and the command reference section of the
+gretl manual, from an XML "database" of gretl commands,
+gretl_commands.xml.
+
+----------
+
+skeleton.c makes a program called "skeleton", which goes through the
+full list of gretl commands (from libgretl) and outputs a skeleton XML
+command reference.  Mostly this is blank, but it contain a mostly
+correct listing of the options available in connection with each
+command (if any), again taken from libgretl.
+
+The output of skeleton is directed to skeleton.xml, an xml file that
+should validate in relation to the gretl command reference DTD,
+gretl_commands.dtd.  This could provide a basis for a translation.  It
+is designed as a purely content-oriented "database" for the gretl
+command reference.
+
+xsltrans.c makes a program called "xsltrans", which parses an XML
+command listing such as skeleton.xml and uses XSL to transform the
+information.  The program is small and uses libxml and  libxsl to
+do most of the work.  Depending on how it is invoked (see the
+Makefile), xsltrans outputs:
+
+* command reference and functions reference files in TeX, which
+  are designed for inclusion in the full PDF manual; 
+
+* gretlcli.hlp, a plain text scripts commands help file for use
+  with the command-line client program, gretlcli; 
+
+* gretlcmd.hlp, a version of the above using markup, for display
+  int the GUI program; and
+
+* gretlgui.hlp, the GUI-specific "online" help file 
+
+xsltrans uses the three XSL stylesheets, gretltxt.xsl, gretlhlp.xsl
+and gretltex.xsl.  The text stylesheet leaves a certain amount of work
+undone, and it is supplemented by a C post-processor (see reflow.c,
+which is used to make the "reflow" program.)  
+
+You may have to edit the Makefile before doing anything else.  
+Once that's ready, try:
+
+make test
+
+and take a look at the output: skeleton.xml.
+
+Most of the "make" targets in here are activated by doing "make"
+in other directories.  To make the help files (plain text and with
+markup), do "make help" in the toplevel "share" directory.  To
+make the PDF User's Guide and Reference, do "make" in doc/tex
+(or doc/tex_it).
+
+-----------
+
+validate.c makes a program, "validate", which checks a command
+reference database such as gretl_commands.xml against libgretl.  It
+flags any command which are present in the library but not the
+reference database, and vice versa.  It also checks (imperfectly) for
+disagreement between the options recognized as valid by libgretl and
+those appearing in the reference.
+
+Allin Cottrell, January 2008

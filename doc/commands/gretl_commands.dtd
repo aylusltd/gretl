@@ -1,0 +1,232 @@
+<!--
+  DTD for gretl command reference. Allin Cottrell 2004
+ -->
+
+<!ENTITY ndash  "&#8211;">
+<!ENTITY Gamma  "&#0915;">
+<!ENTITY agr    "&#0945;">
+<!ENTITY alpha  "&#0945;">
+<!ENTITY bgr    "&#0946;">
+<!ENTITY lgr    "&#0955;">
+<!ENTITY mu     "&#0956;">
+<!ENTITY sigma  "&#0963;">
+<!ENTITY tau    "&#0964;">
+<!ENTITY pi     "&#0960;">
+<!ENTITY rgr    "&#0961;">
+<!ENTITY hellip "&#8230;">
+<!ENTITY mdash  "&#8212;">
+<!ENTITY latex  "LaTeX">
+<!ENTITY minus  "&#8211;">
+<!ENTITY deg    "&#0176;">
+<!ENTITY tex    "TeX">
+<!ENTITY par    "">
+<!ENTITY eg     "e.g.">
+<!ENTITY ie     "i.e.">
+
+<!ELEMENT commandref (command+)>
+
+<!ATTLIST commandref
+   language    CDATA #REQUIRED
+>
+
+<!-- The description is the only element that is absolutely
+     required of a command -->
+
+<!ELEMENT command (usage?, description+, gui-access?)>
+
+<!ATTLIST command
+   name         CDATA #REQUIRED
+   section      (Dataset | Estimation | Graphs | Prediction |
+                 Printing | Programming | Statistics | Tests |
+                 Obsolete | Transformations | Utilities | 
+                 Unknown) "Unknown"
+   context      (cli | gui | both) "both"
+   label        CDATA #IMPLIED
+>
+
+<!ELEMENT description  (para | code | mono | pre | ilist | nlist | table | subhead)*>
+
+<!ATTLIST description
+   context (cli | gui | both) "both"
+>
+
+<!ELEMENT usage (syntax?, altforms?, arguments?, options?, examples?)>
+
+<!ELEMENT arguments    (argument | argblock | argpunct)+>
+<!ELEMENT argblock     (argument | argpunct)+>
+<!ELEMENT options      (option)+>
+<!ELEMENT examples     (example*, demos?)>
+<!ELEMENT demos        (demo)+>
+<!ELEMENT altforms     (altform)+>
+<!ELEMENT gui-access   (menu-path*, other-access?)>
+
+<!ELEMENT argpunct (#PCDATA)>
+<!ELEMENT argument (#PCDATA)>
+<!ATTLIST argument 
+    separated (true | false) "false"
+    optional  (true | false) "false"
+    alternate (true | false) "false"
+    flag CDATA #IMPLIED
+>
+<!ATTLIST argblock 
+    separated (true | false) "false"
+    optional (true | false) "false"
+>
+
+<!ELEMENT altform (#PCDATA | repl | lit)*>
+<!ELEMENT syntax (#PCDATA | repl | lit)*>
+
+<!ELEMENT option   (flag?, optparm?, effect?, note?)>
+
+<!ELEMENT example  (#PCDATA)>
+<!ELEMENT demo     (#PCDATA)>
+<!ELEMENT flag     (#PCDATA)>
+<!ELEMENT optparm  (#PCDATA)>
+<!ELEMENT note     (#PCDATA)>
+<!ELEMENT effect   (#PCDATA | cmdref)*>
+
+<!ELEMENT subhead  (#PCDATA)>
+<!ATTLIST subhead
+   context (cli | gui | both) "both"
+>
+
+<!ATTLIST optparm 
+    optional (true | false) "false"
+>
+
+<!ELEMENT menu-path    (#PCDATA)>
+<!ELEMENT other-access (#PCDATA)>
+
+<!ELEMENT para (#PCDATA | repl | program | math | equation |
+                lit | emphasis | book | quote | filename | by |
+                func | guideref | cmdref | fncref | tabref | 
+                sub | sup | flag | footnote | refnote | opt |
+                cmd | cite | url | seelist)*>
+<!ATTLIST para
+   context (cli | gui | tex | notex | all) "all"
+>
+
+<!ELEMENT refnote (#PCDATA | gfr | book | quote)*>
+<!ATTLIST refnote
+   xref (true | false) "false"
+>
+
+<!ELEMENT cite (#PCDATA | book | emphasis)*>
+<!ATTLIST cite
+   key  CDATA #IMPLIED
+   p (true | false) "false"
+>
+
+<!ELEMENT pre (#PCDATA | repl | lit)*>
+<!ATTLIST pre
+   context (cli | gui | tex | notex | all) "all"
+>
+
+<!ELEMENT code (#PCDATA)>
+<!ATTLIST code
+   context (cli | gui | tex | notex | all) "all"
+>
+
+<!ELEMENT mono (#PCDATA)>
+<!ATTLIST mono
+   context (cli | gui | tex | notex | all) "all"
+>
+
+<!ELEMENT ilist (li)+>
+<!ATTLIST ilist 
+   context (cli | gui | both) "both"
+>
+
+<!ELEMENT nlist (li)+>
+<!ATTLIST nlist 
+   context (cli | gui | both) "both"
+>
+
+<!ELEMENT li (para | code | mono | table)*>
+<!ATTLIST li
+   label CDATA #IMPLIED
+>
+
+<!ELEMENT equation EMPTY>
+<!ATTLIST equation
+   status (inline | display) "inline"
+   tex     CDATA #REQUIRED
+   ascii   CDATA #REQUIRED
+   graphic CDATA #IMPLIED
+>
+
+<!ELEMENT guideref EMPTY>
+<!ATTLIST guideref
+   targ    CDATA #REQUIRED
+>
+
+<!ELEMENT cmdref EMPTY>
+<!ATTLIST cmdref
+   targ    CDATA #REQUIRED
+>
+
+<!ELEMENT seelist (fncref)+>
+
+<!ELEMENT fncref EMPTY>
+<!ATTLIST fncref
+   targ    CDATA #REQUIRED
+>
+
+<!ELEMENT tabref EMPTY>
+<!ATTLIST tabref
+   targ    CDATA #REQUIRED
+>
+
+<!ELEMENT gfr EMPTY>
+<!ATTLIST gfr
+   targ    CDATA #REQUIRED
+>
+
+<!ELEMENT footnote (para)+>
+
+<!ELEMENT table (row)+>
+<!ELEMENT row (cell)+>
+<!ELEMENT cell (#PCDATA | lit | repl | emphasis | 
+                func | math | equation | book | quote)*>
+<!ATTLIST table
+   lwidth   CDATA #IMPLIED
+   rwidth   CDATA #IMPLIED
+   id       CDATA #IMPLIED
+   title    CDATA #IMPLIED
+   lhead    CDATA #IMPLIED
+   rhead    CDATA #IMPLIED
+   style (plain | lpara | rpara | allpara) "plain"
+   context  (cli | gui | both) "both"
+>
+
+<!ELEMENT repl     (#PCDATA)>
+<!ELEMENT program  (#PCDATA)>
+<!ELEMENT lit      (#PCDATA)>
+<!ELEMENT opt      (#PCDATA)>
+<!ELEMENT emphasis (#PCDATA)>
+<!ELEMENT book     (#PCDATA)>
+<!ELEMENT url      (#PCDATA)>
+<!ELEMENT quote    (#PCDATA | lit | repl | math)*>
+<!ELEMENT filename (#PCDATA)>
+<!ELEMENT func     (#PCDATA)>
+<!ELEMENT cmd      (#PCDATA)>
+<!ELEMENT math     (#PCDATA | sub | sup)*>
+<!ELEMENT sub      (#PCDATA)>
+<!ELEMENT sup      (#PCDATA)>
+
+<!ATTLIST lit
+   quote (true | false) "false"
+>
+
+<!ATTLIST repl
+   quote (true | false) "false"
+>
+
+<!ELEMENT by EMPTY>
+<!ATTLIST by
+   r    CDATA #REQUIRED
+   c    CDATA #REQUIRED
+>
+
+
+

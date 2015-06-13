@@ -1,0 +1,737 @@
+\chapter{Funzioni definite dall'utente}
+\label{chap:functions}
+
+\section{Definizione di una funzione}
+\label{func-define}
+
+A partire dalla versione 1.3.3, \app{gretl} contiene un meccanismo per definire
+funzioni all'interno di uno script. Questa funzionalità ha subito alcune
+modifiche prima di raggiungere un assetto stabile ed estensibile, ma pensiamo che
+la versione presente in \app{gretl} 1.6.1 costituisca una solida base per gli
+sviluppi futuri.
+
+Occorre definire una funzione prima di poterla utilizzare. La sintassi
+per farlo è la seguente:
+
+\begin{code}
+function nome-funzione(parametri)
+   corpo della funzione
+end function
+\end{code}
+
+Il \textsl{nome-funzione} identifica la funzione in modo univoco: deve
+iniziare con una lettera, può essere lungo al massimo 31 caratteri
+(eventuali caratteri in più verranno troncati) e non può contenere
+spazi. Se si tenta di definire una funzione con lo stesso nome di un
+comando di \app{gretl}.
+
+I \textsl{parametri} di una funzione vanno indicati sotto forma di lista
+separata da virgole. I parametri possono essere di uno dei seguenti tipi:
+
+\begin{center}
+\begin{tabular}{ll}
+\multicolumn{1}{c}{Tipo} &
+\multicolumn{1}{c}{Descrizione} \\ [4pt]
+\texttt{bool}   & variabile scalare usata come interruttore Booleano \\
+\texttt{int}    & variabile scalare usata come numero intero \\
+\texttt{scalar} & variabile scalare \\
+\texttt{series} & serie di dati \\
+\texttt{list}   & lista di serie \\
+\texttt{matrix} & matrice o vettore \\
+\texttt{string} & variabile stringa o stringa letterale
+\end{tabular}
+\end{center}
+
+Ogni elemento della lista di parametri deve includere due termini: per prima
+cosa un indicatore di tipo, quindi il nome con cui il parametro verrà
+riconosciuto all'interno della funzione. Ecco un esempio:
+    
+\begin{code}
+function funzione(series y, list xvars, bool verboso)
+\end{code}
+
+Ognuno di questi indicatori di tipo, con l'eccezione di \texttt{list} e \texttt{string},
+può essere modificato facendo precedere da un asterisco il parametro ad esso
+associato, come in questo esempio
+%    
+\begin{code}
+function funzione(series *y, scalar *b)
+\end{code}
+
+Il significato di questa modifica è spiegato nella sezione
+\ref{funscope} e ha a che fare con l'uso dei puntatori nel linguaggio di
+programmazione C. Inoltre, i parametri possono essere modificati con il tag
+\texttt{const} (anche in questo caso, si veda la sezione \ref{funscope}).
+
+Oltre a questi elementi richiesti, la specificazione di un parametro
+\texttt{scalare} può includere fino a tre ulteriori informazioni: un valore
+minimo, uno massimo e un valore predefinito. Questi valori aggiuntivi devono
+seguire direttamente il nome del parametro, devono essere racchiusi tra
+parentesi quadre e i singoli elementi devono essere separati dal carattere due
+punti. Ad esempio, ipotizzando di avere un parametro intero chiamato
+\texttt{ordine} per cui si vuole specificare un valore minimo di 1, un massimo
+di 12 e un valore predefinito di 4, si può scrivere
+%    
+\begin{code}
+int ordine[1:12:4]
+\end{code} 
+%
+Per omettere uno dei tre valori aggiuntivi, basta lasciare vuoto il campo
+corrispondente. Ad esempio, \texttt{[1::4]} specifica un minimo di 1 e un valore
+predefinito di 4, senza porre limiti al valore massimo.
+
+Per parametri di tipo \texttt{bool} è possibile specificare come valori predefiniti 
+1 (vero) o 0 (falso), come in questo esempio:
+%    
+\begin{code}
+bool verboso[0]
+\end{code} 
+%
+
+È possibile definire funzioni che non hanno parametri (quelle che in alcuni
+linguaggi di programmazione vengono chiamate ``routine''). In questo caso,
+occorre usare la parola chiave \texttt{void} al posto dell'elenco dei
+parametri:
+%    
+\begin{code}
+function funzione2(void)
+\end{code}
+
+Quando una funzione viene chiamata, i parametri vengono istanziati
+usando gli argomenti indicati nella chiamata della funzione. Vengono
+fatti dei controlli automatici per assicurarsi che il numero degli
+argomenti contenuti in una chiamata di funzione corrisponda al numero
+di parametri, e che i tipi degli argomenti corrispondano ai tipi
+specificati nella definizione della funzione; se qualcuna di queste
+condizioni è violata, viene segnalato un errore. Una precisazione: è consentito
+omettere degli argomenti alla fine della lista, a patto che i valori predefiniti
+siano specificati nella definizione della funzione. Più precisamente: il
+controllo consiste nell'assicurarsi che il numero degli argomenti sia almeno
+uguale al numero dei parametri \textit{richiesti} e non superiore al numero
+totale dei parametri.
+
+È possibile indicare uno scalare, una serie, o una matrice come argomento
+di una funzione, sia specificando il nome di una variabile preesistente,
+oppure utilizzando un'espressione che, valutata, restituisce una variabile del
+tipo appropriato.  Gli scalari possono essere indicati anche sotto forma di
+valori numerici, mentre le liste devono essere indicate per nome.
+
+Il \textsl{corpo della funzione} è composto da comandi \app{gretl} o
+funzioni definite dall'utente (ossia, le funzioni possono essere
+nidificate). Una funzione può chiamare sé stessa (ossia, le funzioni possono
+essere ricorsive).  Se il corpo della funzione può contenere chiamate ad altre
+funzioni non può però contenere definizioni di altre funzioni, ossia non è
+possibile definire una funzione all'interno di un'altra funzione.
+
+\section{Chiamata di una funzione}
+\label{func-call}
+
+Una funzione utente viene chiamata, o invocata, usando il suo nome,
+eventualmente seguito da argomenti tra parentesi; se si usano due o più argomenti,
+vanno separati da virgole. L'esempio seguente mostra una chiamata di
+funzione che rispetta la definizione della funzione stessa.
+    
+\begin{code}
+# Definizione della funzione
+function ols_ess(series y, list xvars)
+  ols y 0 xvars --quiet
+  scalar myess = $ess
+  printf "ESS = %g\n", myess
+  return scalar myess
+end function
+# Script principale
+open data4-1
+list xlist = 2 3 4
+# Chiamata della funzione (il valore restituito viene qui ignorato)
+ols_ess(price, xlist)
+\end{code}
+
+La chiamata della funzione contiene due argomenti: il primo è una
+serie di dati specificata per nome, e il secondo è una lista di
+regressori. Si noti che la funzione produce la variabile \verb+myess+
+come risultato, ma in questo esempio esso è ignorato. Una nota a
+margine: se si desidera che una funzione calcoli alcuni valori che
+hanno a che fare con una regressione, ma non si è interessati ai
+risultati completi della regressione, è possibile usare l'opzione
+\verb+--quiet+ con il comando di stima, come visto sopra.
+    
+Un secondo esempio mostra una chiamata di funzione che assegna il
+valore prodotto dalla funzione ad alcune variabili:
+    
+\begin{code}
+# Definizione di funzione
+function get_uhat(series y, list xvars)
+  ols y 0 xvars --quiet
+  series uh = $uhat
+  return series uh
+end function
+# Script principale
+open data4-1
+list xlist = 2 3 4
+# Chiamata di funzione
+series resids = get_uhat(price, xlist)
+\end{code}
+
+\section{Cancellazione di una funzione}
+\label{func-del}
+
+Se si vuole cancellare dalla memoria una funzione definita in precedenza, è
+possibile usare le parole chiave \texttt{delete} o \texttt{clear}, come in
+
+\begin{code}
+function myfunc delete
+function get_uhat clear
+\end{code}
+
+Si noti che ridefinendo una funzione, la vecchia funzione viene automaticamente
+sovrascritta, quindi raramente è necessario cancellare una funzione in modo
+esplicito.
+
+\section{Programmazione delle funzioni}
+\label{func-details}
+ 
+\subsection{Variabili o puntatori}
+\label{funscope}
+
+Le serie, gli scalari, e le matrici che sono argomenti di una funzione possono
+essere passati alla funzione in due modi: ``così come sono'', oppure come puntatori.
+Si consideri l'esempio seguente:
+\begin{code}
+function triplo1(series x)
+  series ret = 3*x
+  return series ret
+end function
+  
+function triplo2(series *x)
+  series ret = 3*x
+  return series ret
+end function
+\end{code}
+
+Queste due funzioni sono quasi identiche (e producono lo stesso risultato):
+l'unica differenza sta nel fatto che \texttt{triplo1} richiede una serie come
+argomento, come in \texttt{triplo1(serie)}, mentre \texttt{triplo2} richiede un
+\emph{puntatore} a una serie, come in \texttt{triplo2(\&serie)}. 
+
+Perché questa distinzione? Ci sono due motivi principali: il più importante è
+la modularità, il secondo le prestazioni.
+
+L'idea di modularità nasce dal fatto che isolare le funzioni dal resto di uno
+script è di solito una buona idea. Uno dei tanti benefici di questo approccio
+consiste nel fatto che le funzioni sono facilmente riutilizzabili in altri
+contesti. Per ottenere la modularità, \emph{le variabili create in una funzione
+sono locali a quella funzione, e vengono distrutte quando la funzione termina la
+sua esecuzione}, a meno che esse siano rese disponibili come valori di ritorno,
+e che questi siano ``raccolti'' o assegnati nella chiamata della funzione.
+
+Inoltre, le funzioni non hanno accesso alle variabili dell'``ambiente esterno''
+(ossia le variabili che esistono nello script da cui la funzione è
+chiamata), a meno che queste siano passate esplicitamente alla
+funzione come argomenti.
+
+Nel caso predefinito, quando una variabile viene passata a una funzione come
+argomento, la funzione ottiene una \emph{copia} della variabile esterna, quindi il
+valore della variabile nell'ambiente esterno non viene modificato dalle
+operazioni che avvengono all'interno della funzione. Invece, l'uso dei puntatori
+consente a una funzione e all'ambiente di ``cooperare'' in modo
+che una variabile esterna possa essere modificata dalla funzione. Questo
+meccanismo consente a una funzione di restituire più di un valore (anche se una
+funzione può restituire direttamente al massimo una variabile, come spiegato in
+seguito).  Il parametro in questione viene contrassegnato col prefisso
+\texttt{*} nella definizione della funzione, mentre l'argomento corrispondente
+viene contrassegnato col prefisso complementare \verb+&+ nella chiamata. Ad
+esempio:
+%
+\begin{code}
+function get_uhat_and_ess(series y, list xvars, scalar *ess)
+  ols y 0 xvars --quiet
+  ess = $ess
+  series uh = $uhat
+  return series uh
+end function
+# Script principale
+open data4-1
+list xlist = 2 3 4
+# Chiamata di funzione
+scalar SSR
+series resid = get_uhat_and_ess(price, xlist, &SSR)
+\end{code}
+%
+In questo caso, alla funzione viene passato l'\emph{indirizzo} della variabile scalare
+\texttt{SSR} a cui viene assegnato un valore (usando il nome \texttt{ess}).
+Per chi ha familiarità con la programmazione in C, si noti che non è necessario
+(né possibile) ``dereferenziare'' la variabile in questione nella funzione
+usando l'operatore \texttt{*}. Per accedere al contenuto della variabile
+nell'ambiente esterno è sufficiente usare il nome della variabile senza
+prefissi.
+
+Un parametro di ``indirizzo'' di questo tipo può essere utile per offrire
+informazioni opzionali alla chiamata (ossia, l'argomento corrispondente non è
+strettamente necessario, ma sarà usato se presente). In questo caso, al
+parametro andrà assegnato un valore predefinito \texttt{null} e la funzione
+dovrebbe controllare se alla chiamata è stato fornito un argomento
+corrispondente, usando la funzione \texttt{isnull()}.  Ad esempio, ecco la
+funzione vista in precedenza, modificata in modo da rendere opzionale
+l'indicazione del valore di \texttt{ess}.
+%
+\begin{code}
+function get_uhat_and_ess(series y, list xvars, scalar *ess[null])
+  ols y 0 xvars --quiet
+  if !isnull(ess) 
+     ess = $ess
+  endif
+  series uh = $uhat
+  return series uh
+end function
+\end{code}
+%
+Se alla chiamata non si ha interesse per il valore di \texttt{ess}, occorre usare
+\texttt{null} al posto di un vero argomento:
+%
+\begin{code}
+series resid = get_uhat_and_ess(price, xlist, null)
+\end{code}
+
+Usare i puntatori può essere utile anche per ottimizzare le prestazioni:
+anche se una variabile non viene modificata all'interno della funzione, può
+essere una buona idea passarla come puntatore se occupa molta memoria.
+Altrimenti, il tempo impiegato da \app{gretl} per trascrivere il valore della
+variabile nella copia locale potrebbe influire sostanzialmente sul tempo di
+esecuzione dell'intera funzione.
+
+L'esempio \ref{ex:perf-pointers} mostra un caso estremo. Definiamo due funzioni
+che producono il numero di righe di una matrice (un'operazione abbastanza
+veloce). La prima funzione accetta la matrice come argomento, la seconda come
+puntatore alla matrice. Valutiamo le due funzioni usando una matrice con 2000
+righe e 2000 colonne; su un sistema tipico, i valori a virgola mobile occupano 8
+byte di memoria, quindi lo spazio occupato dalla matrice è di circa 32 megabyte.
+
+Eseguendo il codice dell'esempio \ref{ex:perf-pointers} verrà prodotto un
+risultato simile al seguente (i numeri esatti dipenderano dalla macchina su cui
+si esegue il codice):
+\begin{code}
+Tempo impiegato:
+	senza puntatori (copia) = 3.66 secondi,
+	con puntatori (non copia) = 0.01 secondi.
+\end{code}
+
+\begin{script}[htbp]
+  \caption{Confronto di prestazioni: valori contro puntatori}
+  \label{ex:perf-pointers}
+  \begin{scode}
+function a(matrix X)
+  r = rows(X)
+  return scalar r
+end function
+
+function b(matrix *X)
+  r = rows(X)
+  return scalar r
+end function
+
+nulldata 10
+set echo off
+set messages off
+X = zeros(2000,2000)
+r = 0
+
+set stopwatch
+loop 100
+  r = a(X)
+end loop
+fa = $stopwatch
+
+set stopwatch
+loop 100
+  r = b(&X)
+end loop
+fb = $stopwatch
+
+printf "Tempo impiegato:\n\
+\tsenza puntatori (copia) = %g secondi,\n\
+\tcon puntatori (non copia) = %g secondi.\n", fa, fb 
+\end{scode}
+%$
+\end{script}
+
+\subsection{Argomenti lista}
+
+L'uso di una lista come argomento di una funzione dà modo di fornire a una
+funzione un gruppo di argomenti il cui numero non è noto al momento della scrittura della
+funzione, ad esempio un insieme di regressori o di strumenti. All'interno della
+funzione, la lista può essere passata a comandi come
+\texttt{ols}, oppure può essere ``espansa'' usando un costrutto loop
+\texttt{foreach}. Ad esempio, si supponga di avere una lista
+\texttt{X} e di voler calcolare lo scarto quadratico medio di ogni variabile della
+lista:
+%
+\begin{code}
+loop foreach i X
+   scalar sd_$i = sd($i)
+end loop
+\end{code}
+
+Quando a una funzione viene passata una lista di variabili, in realtà riceve
+una copia della lista; al contrario, le variabili referenziate dalla lista sono
+direttamente accessibili dalla funzione, in modo simile a quando si passa
+uno scalare o una serie come ``puntatore'', come descritto in precedenza.
+Passare una lista a una funzione è quindi un altro modo per consentire a una
+funzione di modificare i dati quando questa viene chiamata, piuttosto che
+produrre semplicemente un valore di uscita. Se le variabili \textit{non} verranno
+modificate nella funzione, è una buona idea sottolineare questo fatto usando
+l'identificatore \texttt{const} nella lista dei parametri, come in questo
+esempio:
+%
+\begin{code}
+function funzione (scalar y, const list X)
+\end{code}
+%
+Quando una lista è marcata come \texttt{const}, ogni tentativo di rinominare,
+cancellare o sovrascrivere i valori originali delle variabili nella lista
+produrrà un errore.
+ 
+Se un argomento lista per una funzione è opzionale, esso va indicato facendolo
+seguire da un valore predefinito \texttt{null}, nel modo seguente:
+%
+\begin{code}
+function myfunc (scalar y, list X[null])
+\end{code}
+%
+In questo caso, se la chiamata passa \texttt{null} come argomento di lista, la
+lista \texttt{X} all'interno della funzione sarà vuota. Questa condizione può
+essere riconosciuta usando la funzione \texttt{nelem()}, che restituisce il
+valore 0 se una lista è vuota (questo meccanismo può essere usato anche per
+controllare se è stata fornita una lista vuota come argomento).
+
+\subsection{Argomenti stringa}
+
+È possibile usare stringhe come argomenti, ad esempio per gestire in
+modo flessibile i nomi di variabili create all'interno di una funzione.
+Nell'esempio che segue, la funzione \texttt{movavg} produce una lista
+che contiene due medie mobili costruite a partire da una serie iniziale,
+con i nomi delle nuove variabili formati usando l'argomento stringa.
+%
+\begin{code}
+function movavg (series y, string vname)
+   series @vname_2 = (y+y(-1)) / 2
+   series @vname_4 = (y+y(-1)+y(-2)+y(-3)) / 4
+   list retlist = @vname_2 @vname_4
+   return list retlist
+end function
+
+open data9-9
+list malist = movavg(nocars, "nocars")
+print malist --byobs
+\end{code}
+%
+L'ultima riga dello script stamperà due variabili chiamate
+\verb|nocars_2| e \verb|nocars_4|.  Per i dettagli sulla gestione delle
+stringhe, si veda il capitolo~\ref{chap-persist}.
+
+\subsection{Recuperare il nome degli argomenti}
+
+Le variabili passate come argomenti a una funzione vengono chiamate all'interno
+della funzione col nome dei parametri corrispondenti. Ad esempio, all'interno di
+questa funzione:
+%
+\begin{code}
+function somefun (series y)
+\end{code}
+%
+abbiamo la serie chiamata \texttt{y}. In alcuni casi può però essere utile
+disporre del nome delle variabili che sono state passate come argomenti.
+Questo risultato si ottiene usando la funzione \texttt{argname}, che accetta
+come unico argomento il nome di un parametro della funzione e restituisce una
+stringa. Ecco un esempio:
+%
+\begin{code}
+function namefun (series y)
+  printf "La serie passata come 'y' si chiamava %s\n", argname(y)
+end function
+
+open data9-7
+namefun(QNC)
+\end{code}
+%
+L'output è il seguente:
+%
+\begin{code}
+La serie passata come 'y' si chiamava QNC
+\end{code}
+
+Occorre notare che questo meccanismo non funziona sempre: gli argomenti di una
+funzione possono essere variabili senza nome, create al volo, come in
+\texttt{somefun(log(QNC))} o \texttt{somefun(CPI/100)}.  In questo caso, la
+funzione \textsf{argname} produce una stringa vuota. Quando si usa questo
+meccanismo all'interno di una funzione occorre quindi controllare il valore
+prodotto da \texttt{argname} usando la funzione \texttt{isstring()}, che produce
+1 per una stringa non vuota, o 0 altrimenti.
+
+\subsection{Valori di uscita}
+
+Le funzioni possono non produrre alcun valore (limitandosi ad esempio
+a stampare un risultato), oppure possono produrre una singola variabile:
+una scalare, una serie, una lista o una matrice (al momento le funzioni non
+possono produrre stringhe).  Il valore di uscita è specificato
+con una dichiarazione all'interno del corpo della funzione
+che comincia con la parola chiave \verb+return+, seguita dall'indicatore del
+tipo e dal nome della variabile (in modo analogo a quanto avviene per la lista
+dei parametri di una funzione).  All'interno di una funzione può esserci solo
+una di queste dichiarazioni. Ecco un esempio di dichiarazione return valida:
+%
+\begin{code}
+return scalar SSR
+\end{code}
+%
+Per fare in modo che una funzione produca più di una variabile in uscita, è
+possibile farle produrre una lista, ossia è possibile definire alcune variabili
+all'interno della funzione e accorparle in una lista; in questo caso esse non
+vengono distrutte all'uscita della funzione. Ecco un semplice esempio, che
+illustra anche la possibilità di impostare delle etichette descrittive per le
+variabili generate in una funzione.
+%    
+\begin{code}
+function make_cubes (list xlist)
+   list cubes = null
+   loop foreach i xlist --quiet
+      series $i3 = $i^3
+      setinfo $i3 -d "cube of $i"
+      list cubes += $i3
+    end loop
+    return list cubes
+end function
+
+open data4-1
+list xlist = price sqft
+list cubelist = make_cubes(xlist)
+print xlist cubelist --byobs
+labels
+\end{code}
+%
+Si noti che la dichiarazione \verb+return+ \emph{non} indica alla
+funzione di produrre il valore (terminare) nel punto in cui essa
+appare nel corpo della funzione. Piuttosto, essa specifica quale
+variabile è disponibile per l'assegnazione quando la funzione
+terminerà, cosa che può avvenire solo quando: a) viene raggiunta la
+fine del codice che definisce la funzione, oppure b) \app{gretl} produce
+un errore, o c) si incontra una dichiarazione \verb+funcerr+.
+ 
+La parola chiave \verb+funcerr+, che può essere seguita da una stringa
+contenuta fra virgolette doppie, fa terminare una funzione con un
+messaggio di errore. Se si fornisce una stringa, questa viene stampata
+all'uscita, altrimenti viene mostrato un messaggio di errore generico.
+Questo meccanismo consente all'autore di una funzione di anticipare un possibile
+errore di esecuzione e/o di offrire un messaggio di errore più specifico. Ad
+esempio:
+%
+\begin{code}
+if nelem(xlist) = 0
+   funcerr "xlist non può essere vuota"
+end if
+\end{code}
+
+\subsection{Controllo degli errori}
+
+Quando gretl legge e ``compila'' una definizione di funzione, esegue
+un controllo degli errori minimale: controlla che il nome della
+funzione sia accettabile e che non si tenti di definire una funzione
+all'interno di una funzione (si veda la sezione~\ref{func-define}). Se
+il corpo della funzione contiene comandi non validi, verrà segnalato
+solo quando la funzione viene chiamata.
+
+\subsection{Stampa dei risultati}
+
+Durante l'esecuzione di una funzione, il meccanismo con cui \app{gretl} mostra i
+comandi e i risultati delle operazioni di creazione di nuove variabili, viene
+disattivato. Per riattivarlo (ad esempio se si vuole fare il debug del codice di
+una nuova funzione), basta usare uno dei seguenti comandi (o entrambi)
+all'interno nella funzione:
+%
+\begin{code}
+set echo on
+set messages on
+\end{code}
+
+\section{Pacchetti di funzioni}
+\label{sec:func-packages}
+
+A partire dalla versione 1.6.0, \app{gretl} contiene un meccanismo per creare
+pacchetti di funzioni e renderli disponibili agli altri utenti. Questa
+funzionalità è ancora sperimentale, ma è già utilizzabile seguendo
+le istruzioni contenute in questa sezione.
+
+\subsection{Caricamento in memoria di una funzione}
+
+Ci sono vari modi per caricare una funzione in memoria:
+
+\begin{itemize}
+\item Se si ha un file script che contiene definizioni di funzioni, aprendo
+  il file ed eseguendolo;
+\item Creando un file script da zero, includendo almeno una definizione di
+  funzione ed eseguendo lo script;
+\item Aprendo il terminale di gretl e inserendo una definizione di funzione in
+  modalità interattiva. Questo metodo non è particolarmente raccomandato: è
+  probabilmente più comodo definire una funzione in modalità non interattiva.
+\end{itemize}
+
+Ad esempio, si supponga di voler creare un pacchetto con una funzione che
+produce l'incremento percentuale di una serie storica. Basta aprire un file
+script e digitare
+
+\begin{code}
+function pc(series y)
+  series foo = diff(y)/y(-1)
+  return series foo
+end function
+\end{code}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[scale=0.5]{figures/func_check}
+  \caption{Controllo del funzionamento di una funzione}
+  \label{fig:func_check}
+\end{figure}
+
+Ora si può eseguire la funzione e controllare che funzioni correttamente,
+facendo alcuni test; ad esempio si può aprire il terminale e digitare:
+
+\begin{code}
+genr x = uniform()
+genr dpcx = pc(x)
+print x dpcx --byobs
+\end{code}
+
+Si dovrebbe vedere qualcosa di simile alla figura \ref{fig:func_check}. La
+funzione sembra essere corretta, quindi è possibile procedere al passo
+successivo.
+
+\subsection{Creazione di un pacchetto}
+
+Usando l'interfaccia grafica del programma, nel menù ``File, Funzioni'', si trovano
+quattro voci: ``Sul sistema locale'', ``Sul server di gretl'', ``Modifica
+pacchetto'', ``Nuovo pacchetto''.
+
+Selezionare il comando ``Nuovo pacchetto'' (il comando funziona solo quando è
+stata caricata in memoria almeno una funzione definita dall'utente); nella prima
+finestra di dialogo occorre selezionare:
+
+\begin{itemize}
+\item Una funzione pubblica da impacchettare;
+\item Zero o più funzioni ausiliarie ``private''.
+\end{itemize}
+
+Le funzioni pubbliche sono direttamente disponibili per gli utenti, quelle private
+fanno parte del meccanismo che lavora ``dietro le quinte'' in un pacchetto di funzioni.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[scale=0.5]{figures/package_editor}
+  \caption{La finestra di modifica di un pacchetto}
+  \label{fig:package_editor}
+\end{figure}
+
+Facendo clic su ``OK'' apparirà una seconda finestra di dialogo (si veda la
+figura \ref{fig:package_editor}), in cui occorre
+inserire le informazioni sul pacchetto (al momento: l'autore, la versione, la
+data e una breve descrizione), oltre che un testo di aiuto che descrive
+l'interfaccia pubblica della funzione. Si ha l'opportunità di modificare il
+codice delle funzioni, selezionandole dal menù e facendo clic su ``Modifica
+codice della funzione''.  Infine, è possibile scegliere di caricare il pacchetto
+sul server di gretl appena lo si salva, selezionando l'apposita casella.
+
+Facendo clic su ``OK'', si otterrà una finestra di salvataggio del file, che
+suggerirà di salvare il file in una directory chiamata \texttt{functions}, collocata
+sotto la directory di sistema di \app{gretl} (se si ha il permesso di scrittura
+su di essa), oppure nella directory utente di \app{gretl}. Questo è il posto
+suggerito per salvare i pacchetti di funzioni, visto che il programma li
+cercherà automaticamente qui, al momento di aprire questo tipo di file.
+
+Ovviamente, il comando ``File, Funzioni, Modifica pacchetto'' permette di
+modificare un pacchetto precedentemente salvato.
+
+\vspace{6pt}
+
+Qualche informazione sui file dei pacchetti di funzioni: per impostazione
+predefinita essi hanno l'estensione \texttt{.gfn}, e, a differenza dei file di
+comandi di \app{gretl}, sono file in formato XML che contengono il codice delle
+funzioni e le informazioni aggiunte dal creatore del pacchetto. Gli utenti
+esperti possono anche scrivere questi file da zero, invece di usare l'editor di
+pacchetti, ma la maggior parte delle persone troverà più comodo usare
+quest'ultimo. Si noti che i caratteri speciali XML nel codice della funzione
+vanno commentati, ad esempio \texttt{\&} va rappresentato come \texttt{\&amp;}.
+Inoltre, alcuni elementi della sintassi delle funzioni differiscono dalla loro
+rappresentazione standard all'interno degli script di comandi: i parametri e i
+valori di uscita (se esistono) vanno rappresentati in XML. Sostanzialmente, la
+funzione viene analizzata e caricata in modo veloce usando la \textsf{libxml}.
+
+\vspace{6pt}
+
+\subsection{Caricamento di un pacchetto}
+
+Perché impacchettare le funzioni in questo modo? Per scoprirlo, proviamo a
+chiudere gretl, a riaprirlo, e ad andare nel menù ``File, Funzioni, Sul sistema
+locale''. Se le operazioni precedenti sono andate a buon fine, troveremo il
+pacchetto che avevamo creato, insieme alla sua breve descrizione. Facendo clic
+su ``Info'', si ottiene una finestra con tutte le informazioni disponibili sul
+pacchetto; facendo clic sull'icona ``Visualizza codice'' della barra degli
+strumenti di questa nuova finestra, si aprirà una finestra che mostra il codice
+delle funzioni contenute nel pacchetto. Tornando alla finestra ``Pacchetti funzioni'',
+facendo clic sul nome di un pacchetto, le funzioni verranno caricate, pronte per
+essere eseguite, usando il pulsante ``Chiama''.
+
+Dopo aver caricato le funzioni contenute nel pacchetto, aprendo il terminale di
+gretl, sarà possibile richiamare il testo di aiuto relativo ad una delle nuove
+funzioni caricate, se esso esiste, con il comando \texttt{help funzione},
+dove \texttt{funzione} è il nome della funzione pubblica del pacchetto caricato.
+
+In modo simile, è possibile consultare e caricare i pacchetti di funzioni
+disponibili sul server di \app{gretl}, selezionando ``File, Funzioni, Sul server
+di gretl''.
+
+Una volta che un pacchetto è installato sulla macchina locale, è possibile usare
+le funzioni contenute attraverso l'interfaccia grafica, come descritto sopra, o
+quella a riga di comando (in uno script o nel terminale), caricando la funzione
+con il comando \texttt{include} e specificando come argomento il nome del
+pacchetto, compresa l'estensione \texttt{.gfn}.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[scale=0.5]{figures/function_call}
+  \caption{Uso di un pacchetto}
+  \label{fig:function_call}
+\end{figure}
+
+Per continuare con l'esempio, caricare il file \texttt{np.gdt} (uno dei dataset
+di esempio forniti con \app{gretl}). Si supponga di voler calcolare il tasso di
+crescita per la variabile \texttt{iprod} usando la funzione appena creata e di
+salvare il risultato in una serie chiamata \texttt{pippo}.
+
+Basta selezionare ``File, Funzioni, Sul sistema locale'' e comparirà un elenco
+dei pacchetti installati, compreso quello appena creato. Selezionandolo e
+facendo clic su ``Esegui'' (o facendo doppio clic sul nome del pacchetto),
+apparirà una finestra simile a quella della figura \ref{fig:function_call}.
+Facendo clic su ``Ok'', la serie \texttt{pippo} verrà generata (si veda la
+figura \ref{fig:iprod_pc}). Per fare in modo che la nuova variabile compaia
+nell'elenco delle variabili nella finestra principale, può essere necessario
+usare il comando ``Dati, Aggiorna finestra'' (o semplicemente premere il tasto
+``r'').
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[scale=0.5]{figures/iprod_pc}
+  \caption{Incremento percentuale della produzione industriale}
+  \label{fig:iprod_pc}
+\end{figure}
+
+In alternativa, lo stesso risultato si ottiene con lo script
+\begin{code}
+include pc.gfn
+open np
+pippo = pc(iprod)
+\end{code}
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "gretl-guide-it"
+%%% End: 
+

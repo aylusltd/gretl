@@ -1,0 +1,1194 @@
+\chapter{Cointegrazione e modelli vettoriali a correzione d'errore}
+\label{chap:vecm}
+
+\section{Introduzione}
+\label{sec:VECM-intro}
+
+I concetti correlati di cointegrazione e correzione d'errore sono stati al
+centro della ricerca in macroeconometria negli ultimi anni. L'aspetto
+interessante del Modello Vettoriale a Correzione di Errore (VECM) consiste nel
+fatto che permette al ricercatore di inserire una rappresentazione di relazioni
+di equilibrio economico in una specificazione abbastanza ricca basata sulle
+serie storiche. Questo approccio supera l'antica dicotomia tra i modelli
+strutturali, che rappresentavano fedelmente la teoria macroeconomica ma non si
+adattavano ai dati, e l'analisi delle serie storiche, che era più precisa nel
+riprodurre l'andamento dei dati, ma di difficile, se non impossibile,
+interpretazione in termini di teoria economica.
+
+L'idea basilare della cointegrazione è strettamente collegata al concetto di
+radici unitarie (si veda la sezione~\ref{sec:uroot}).  Si supponga di avere un
+insieme di variabili macroeconomiche di interesse, e di non poter rifiutare
+l'ipotesi che alcune di queste variabili, considerate individualmente, siano
+non-stazionarie. In particolare, si supponga che un sottoinsieme di queste
+variabili siano individualmente integrate di ordine 1, o I(1), ossia che non
+siano stazionarie, ma che la loro differenza prima sia stazionaria. Dati i
+problemi di tipo statistico che sono associati all'analisi dei dati non
+stazionari (ad esempio il problema della regressione spuria), l'approccio
+tradizionale in questo caso consiste nel prendere la differenza prima delle
+variabili prima di procedere con l'analisi statistica.
+
+In questo modo però, si perde informazione importante. Può darsi che mentre le
+variabili sono I(1) prese singolarmente, esista una loro combinazione lineare
+che sia invece stazionaria, ossia I(0) (potrebbe esserci anche più di una
+combinazione lineare). In altri termini, mentre l'insieme delle variabili è
+libero di muoversi nel tempo, esistono comunque delle relazioni che legano fra
+di loro le variabili; è possibile interpretare queste relazioni, o
+\emph{vettori di cointegrazione} come condizioni di equilibrio.
+
+Ad esempio, ipotizziamo di scoprire che la quantità di moneta, $M$, il livello
+dei prezzi, $P$, il tasso di interesse nominale, $R$, e l'output, $Y$, siano
+tutti I(1). Secondo la teoria standard della domanda di moneta, dovremmo
+comunque aspettarci una relazione di equilibrio tra la quantità di moneta reale,
+il tasso d'interesse e l'output; ad esempio
+\[
+m - p = \gamma_0 + \gamma_1 y + \gamma_2 r \qquad \gamma_1 > 0,
+\gamma_2 < 0
+\]
+dove le variabili in minuscolo indicano i logaritmi. In equilibrio si ha quindi
+\[
+m - p - \gamma_1 y - \gamma_2 r = \gamma_0
+\]
+Nella realtà non ci si aspetta che questa condizione sia soddisfatta in ogni
+periodo, ma occorre ammettere la possibilità di disequilibri di breve periodo.
+Ma se il sistema ritorna all'equilibrio dopo un disturbo, ne consegue che
+il vettore $x = (m, p, y, r)'$ è limitato da un vettore di cointegrazione
+$\beta' = (\beta_1, \beta_2, \beta_3, \beta_4)$, tale che $\beta'x$ è
+stazionario (con una media pari a $\gamma_0$). Inoltre, se l'equilibrio è
+caratterizzato correttamente dal semplice modello visto sopra, si ha $\beta_2 =
+-\beta_1$, $\beta_3 < 0$ e $\beta_4 > 0$. Queste proprietà sono testabili
+attraverso l'analisi di cointegrazione.
+
+Questa analisi consiste tipicamente in tre passi:
+\begin{enumerate}
+\item Test per verificare il numero di vettori di cointegrazione, ossia il 
+  \emph{rango di cointegrazione} del sistema.
+\item Stima di un VECM di rango appropriato, non soggetto ad altre restrizioni.
+\item Test dell'interpretazione dei vettori di cointegrazione come condizioni di
+  equilibrio, usando le restrizioni sugli elementi di questi vettori.
+\end{enumerate}
+
+Le sezioni seguenti approfondiscono ognuno dei passi, aggiungendo altre
+considerazioni econometriche e spiegando come implementare l'analisi usando
+\app{gretl}.
+
+\section{Modelli vettoriali a correzione di errore (VECM) come rappresentazione di
+un sistema cointegrato}
+\label{sec:VECM-rep}
+
+Si consideri un VAR di ordine $p$ con una parte deterministica data da $\mu_t$
+(tipicamente un polinomio nel tempo). È possibile scrivere il processo
+$n$-variato $y_t$ come
+\begin{equation}
+  \label{eq:VECM-VAR}
+  y_t = \mu_t + A_1 y_{t-1} + A_2 y_{t-2} + \cdots + A_p y_{t-p} +
+  \epsilon_t 
+\end{equation}
+Ma poiché $y_{t-1} \equiv y_{t} - \Delta y_t$ and $y_{t-i} \equiv
+y_{t-1} - (\Delta y_{t-1} + \Delta y_{t-2} + \cdots + \Delta
+y_{t-i+1})$, è possibile riscrivere l'equazione nel modo seguente:
+\begin{equation}
+  \label{eq:VECM}
+  \Delta y_t = \mu_t + \Pi y_{t-1} + \sum_{i=1}^{p-1} \Gamma_i \Delta
+  y_{t-i} + \epsilon_t ,
+\end{equation}
+dove $\Pi = \sum_{i=1}^p A_i$ e $\Gamma_k = -\sum_{i=k}^p A_i$.
+Questa è la rappresentazione VECM della (\ref{eq:VECM-VAR}).
+
+L'interpretazione della (\ref{eq:VECM}) dipende in modo cruciale da $r$, il
+rango della matrice $\Pi$.
+\begin{itemize}
+\item Se $r = 0$, i processi sono tutti I(1) e non cointegrati.
+\item Se $r = n$, $\Pi$ è invertibile e i processi sono tutti I(0).
+\item La cointegrazione accade in tutti i casi intermedi, quando
+  $0 < r < n$ e $\Pi$ può essere scritta come $\alpha \beta'$. In 
+  questo caso, $y_t$ è I(1), ma la combinazione $z_t = \beta'y_t$ è I(0).
+  Se, ad esempio, $r=1$ e il primo elemento di $\beta$ fosse $-1$, si
+  potrebbe scrivere $z_t = -y_{1,t} + \beta_2 y_{2,t} + \cdots + \beta_n y_{n,t}$,
+  che è equivalente a dire che
+  \[
+    y_{1_t} = \beta_2 y_{2,t} + \cdots + \beta_n y_{n,t} - z_t
+  \]
+  è una relazione di equilibrio di lungo periodo: le deviazioni
+  $z_t$ possono non essere pari a zero, ma sono stazionarie. In questo caso,
+  la (\ref{eq:VECM}) può essere scritta come
+  \begin{equation}
+    \label{eq:VECMab}
+    \Delta y_t = \mu_t + \alpha \beta' y_{t-1} + \sum_{i=1}^{p-1} \Gamma_i 
+    \Delta y_{t-i} + \epsilon_t .
+  \end{equation}
+  Se $\beta$ fosse noto, $z_t$ sarebbe osservabile e tutti i restanti parametri
+  potrebbero essere stimati con OLS. In pratica, la procedura stima per prima
+  cosa $\beta$ e tutto il resto poi.
+\end{itemize}
+
+Il rango di $\Pi$ viene analizzato calcolando gli autovalori di una matrice ad
+essa strettamente legata che ha rango pari a quello di $\Pi$, ma che per
+costruzione è simmetrica e semidefinita positiva. Di conseguenza, tutti i suoi
+autovalori sono reali e non negativi e i test sul rango di $\Pi$ possono quindi
+essere condotti verificando quanti autovalori sono pari a 0.
+
+Se tutti gli autovalori sono significativamente diversi da 0, tutti i processi
+sono stazionari. Se, al contrario, c'è almeno un autovalore pari a 0, allora
+il processo $y_t$ è integrato, anche se qualche combinazione lineare $\beta'y_t$
+potrebbe essere stazionaria. All'estremo opposto, se non ci sono autovalori
+significativamente diversi da 0, non solo il processo $y_t$ è non-stazionario,
+ma vale lo stesso per qualsiasi combinazione lineare $\beta'y_t$; in altre
+parole non c'è alcuna cointegrazione.
+
+La stima procede tipicamente in due passi: per prima cosa si esegue una serie di
+test per determinare $r$, il rango di cointegrazione. Quindi, per un certo rango
+vengono stimati i parametri dell'equazione (\ref{eq:VECMab}). I due comandi
+offerti da \app{gretl} per compiere queste operazioni sono rispettivamente
+\texttt{coint2} e \texttt{vecm}.
+
+La sintassi di \texttt{coint2} è
+\begin{code}
+  coint2 p listay [ ; listax [ ; listaz ] ]
+\end{code}
+dove \texttt{p} è il numero di ritardi nella (\ref{eq:VECM-VAR}),
+\texttt{listay} è una lista che contiene le variabili $y_t$,
+\texttt{listax} è una lista opzionale di variabili esogene, e
+\texttt{listaz} è un'altra lista opzionale di variabili esogene il cui
+effetto è ipotizzato essere confinato alle relazioni di cointegrazione.
+
+La sintassi di \texttt{vecm} è
+\begin{code}
+  vecm p r listay [ ; listax [ ; listaz ] ]
+\end{code}
+dove \texttt{p} è il numero di ritardi nella (\ref{eq:VECM-VAR}),
+\texttt{r} è il rango di cointegrazione, e le liste \texttt{listay},
+\texttt{listax} e \texttt{listaz} hanno la stessa funzione che hanno nel comando
+\texttt{coint2}.
+
+Entrambi i comandi supportano opzioni specifiche per trattare la componente
+deterministica $\mu_t$; queste sono illustrate nella sezione seguente.
+
+\section{Interpretazione delle componenti deterministiche}
+\label{sec:coint-5cases}
+
+L'inferenza statistica nell'ambito dei sistemi cointegrati dipende dalle ipotesi
+fatte a proposito dei termini deterministici, per cui si possono individuare i
+ben noti ``cinque casi''.
+
+Nell'equazione (\ref{eq:VECM}), il termine $\mu_t$ di solito assume la forma
+seguente:
+\[
+  \mu_t = \mu_0 + \mu_1 \cdot t .
+\]
+Affinché il modello si adatti nel modo migliore alle caratteristiche dei dati,
+occorre risolvere una questione preliminare. I dati sembrano seguire un trend
+deterministico? In caso positivo, si tratta di un trend lineare o quadratico?
+
+Una volta stabilito questo, bisogna imporre restrizioni coerenti su $\mu_0$
+e $\mu_1$. Ad esempio, se i dati non esibiscono un trend evidente, ciò
+significa che $\Delta y_t$ vale zero in media, quindi è ragionevole assumere
+che anche il suo valore atteso sia zero. Scriviamo l'equazione
+(\ref{eq:VECM}) come
+\begin{equation}
+  \label{eq:VECM-poly}
+  \Gamma(L) \Delta y_t = \mu_0 + \mu_1 \cdot t + \alpha z_{t-1} +
+  \epsilon_t ,
+\end{equation}
+dove si ipotizza che $z_{t} = \beta' y_{t}$ sia stazionario e quindi possieda
+momenti finiti. Prendendo i valori attesi non condizionati, otteniamo
+\[ 
+  0 = \mu_0 + \mu_1 \cdot t + \alpha m_z .
+\]
+Visto che il termine al primo membro non dipende da $t$, il vincolo
+$\mu_1 = 0$ pare appropriato. Per quanto riguarda $\mu_0$, ci sono solo due
+modi per rendere vera l'espressione vista sopra: $\mu_0 = 0$ con $m_z = 0$,
+oppure $\mu_0$ esattamente uguale a $-\alpha m_z$. Questa ultima possibilità
+è meno restrittiva nel senso che il vettore $\mu_0$ può non essere pari a zero,
+ma è vincolato ad essere una combinazione lineare delle colonne di
+$\alpha$. Ma in questo caso $\mu_0$ può essere scritto come
+$\alpha \cdot c$, si può scrivere la (\ref{eq:VECM-poly}) come
+\[
+  \Gamma(L) \Delta y_t = \alpha \left[ \beta' \quad c \right] 
+  \left[ \begin{array}{c} y_{t-1} \\ 1 \end{array} \right]  
+  + \epsilon_t .
+\]
+La relazione di lungo periodo contiene quindi un'intercetta. Questo tipo
+di restrizione è scritta di solito nel modo seguente:
+\[
+  \alpha'_{\perp} \mu_0 = 0 ,
+\]
+dove $\alpha_{\perp}$ è lo spazio nullo sinistro della matrice $\alpha$.
+
+È possibile dare un'intuizione del problema per mezzo di un semplice esempio.
+Si consideri una serie $x_t$ che si comporta nel modo seguente:
+%      
+\[ x_t = m + x_{t-1} + \varepsilon_t \] 
+%
+dove $m$ è un numero reale e $\varepsilon_t$ è un processo ``rumore bianco''
+(``white noise''): $x_t$ è quindi una ``passeggiata aleatoria'' (``random
+walk'') con deriva pari a $m$. Nel caso particolare in cui $m$ = 0, la deriva
+scompare e $x_t$ è una passeggiata aleatoria pura.
+    
+Si consideri ora un altro processo $y_t$, definito da
+%      
+\[ y_t = k + x_t + u_t \] 
+%
+dove, ancora, $k$ è un numero reale e $u_t$ è un processo a rumore bianco.
+Poiché $u_t$ è stazionario per definizione, $x_t$ e $y_t$ sono
+cointegrate, ossia la loro differenza
+%      
+\[ z_t = y_t - x_t = k + u_t \]
+%	
+è un processo stazionario. Per $k$ = 0, $z_t$ è un semplice rumore bianco
+a media zero, mentre per $k$ $\ne$ 0 il processo $z_t$ è un rumore bianco
+con media diversa da zero.
+  
+Dopo alcune semplici sostituzioni, le due equazioni precedenti possono
+essere rappresentate congiuntamente come un sistema VAR(1)
+%      
+\[ \left[ \begin{array}{c} y_t \\ x_t \end{array} \right] = \left[
+  \begin{array}{c} k + m \\ m \end{array} \right] + \left[
+  \begin{array}{rr} 0 & 1 \\ 0 & 1 \end{array} \right] \left[
+  \begin{array}{c} y_{t-1} \\ x_{t-1} \end{array} \right] + \left[
+  \begin{array}{c} u_t + \varepsilon_t \\ \varepsilon_t \end{array}
+\right] \]
+%	
+o in forma VECM
+%      
+\begin{eqnarray*}
+  \left[  \begin{array}{c} \Delta y_t \\ \Delta x_t \end{array} \right]  & = & 
+  \left[  \begin{array}{c} k + m \\ m \end{array} \right] +
+  \left[  \begin{array}{rr} -1 & 1 \\ 0 & 0 \end{array} \right] 
+  \left[  \begin{array}{c} y_{t-1} \\ x_{t-1} \end{array} \right] + 
+  \left[  \begin{array}{c} u_t + \varepsilon_t \\ \varepsilon_t \end{array} \right] = \\
+  & = & 
+  \left[  \begin{array}{c} k + m \\ m \end{array} \right] +
+  \left[  \begin{array}{r} -1 \\ 0 \end{array} \right]
+  \left[  \begin{array}{rr} 1 & -1 \end{array} \right] 
+  \left[  \begin{array}{c} y_{t-1} \\ x_{t-1} \end{array} \right] + 
+  \left[  \begin{array}{c} u_t + \varepsilon_t \\ \varepsilon_t \end{array} \right] = \\
+  & = & 
+  \mu_0 + \alpha \beta^{\prime} \left[  \begin{array}{c} y_{t-1} \\ x_{t-1} \end{array} \right] + \eta_t = 
+  \mu_0 + \alpha z_{t-1} + \eta_t ,
+\end{eqnarray*}
+%	
+dove $\beta$ è il vettore di cointegrazione e $\alpha$ è il vettore
+dei ``loading'' o ``aggiustamenti''.
+     
+Possiamo ora considerare tre casi possibili:
+    
+\begin{enumerate}
+\item $m$ $\ne$ 0: in questo caso $x_t$ ha un trend, come abbiamo appena
+  visto; ne consegue che anche $y_t$ segue un trend lineare perché in
+  media si mantiene a una distanza fissa da $x_t$ pari a $k$.  Il vettore
+  $\mu_0$ non ha restrizioni.
+	
+\item $m$ = 0 e $k$ $\ne$ 0: in questo caso, $x_t$ non ha un trend, e di
+  conseguenza neanche $y_t$.  Tuttavia, la distanza media tra $y_t$ e
+  $x_t$ è diversa da zero. Il vettore $\mu_0$ è dato da
+%	  
+  \[
+  \mu_0 = \left[ \begin{array}{c} k \\ 0 \end{array} \right]
+  \]
+%	    
+  che è non nullo, quindi il VECM mostrato sopra ha un termine
+  costante.  La costante, tuttavia è soggetta alla restrizione che il
+  suo secondo elemento deve essere pari a 0. Più in generale,
+  $\mu_0$ è un multiplo del vettore $\alpha$. Si noti
+  che il VECM potrebbe essere scritto anche come
+%	  
+  \[
+  \left[ \begin{array}{c} \Delta y_t \\ \Delta x_t \end{array} \right]
+  = \left[ \begin{array}{r} -1 \\ 0 \end{array} \right] \left[
+    \begin{array}{rrr} 1 & -1 & -k \end{array} \right] \left[
+    \begin{array}{c} y_{t-1} \\ x_{t-1} \\ 1 \end{array} \right] +
+  \left[ \begin{array}{c} u_t + \varepsilon_t \\ \varepsilon_t
+    \end{array} \right]
+  \]
+%	   
+  che incorpora l'intercetta nel vettore di cointegrazione. Questo è
+  il caso chiamato ``costante vincolata''.
+	
+\item $m$ = 0 e $k$ = 0: questo caso è il più vincolante: chiaramente,
+  né $x_t$ né $y_t$ hanno un trend, e la loro distanza media è zero.
+  Anche il vettore $\mu_0$ vale 0, quindi questo caso può essere
+  chiamato ``senza costante''.
+
+\end{enumerate}
+
+Nella maggior parte dei casi, la scelta tra queste tre possibilità si basa
+su un misto di osservazione empirica e di ragionamento economico. Se
+le variabili in esame sembrano seguire un trend lineare, è opportuno
+non imporre alcun vincolo all'intercetta. Altrimenti occorre chiedersi
+se ha senso specificare una relazione di cointegrazione che includa
+un'intercetta diversa da zero. Un esempio appropriato potrebbe essere
+la relazione tra due tassi di interesse: in generale questi non hanno
+un trend, ma il VAR potrebbe comunque avere un'intercetta perché la
+differenza tra i due (lo ``spread'' sui tassi d'interesse) potrebbe
+essere stazionaria attorno a una media diversa da zero (ad esempio per
+un premio di liquidità o di rischio).
+    
+L'esempio precedente può essere generalizzato in tre direzioni:
+    
+\begin{enumerate}
+\item Se si considera un VAR di ordine maggiore di 1, l'algebra si
+  complica, ma le conclusioni sono identiche.
+\item Se il VAR include più di due variabili endogene, il rango di
+  cointegrazione $r$ può essere maggiore di 1. In questo caso $\alpha$
+  è una matrice con $r$ colonne e il caso con la costante vincolata
+  comporta che $\mu_0$ sia una combinazione lineare delle colonne di
+  $\alpha$.
+\item Se si include un trend lineare nel modello, la parte
+  deterministica del VAR diventa $\mu_0$ + $\mu_1$. Il ragionamento è
+  praticamente quello visto sopra, tranne per il fatto che
+  l'attenzione è ora posta su $\mu_1$ invece che su $\mu_0$. La
+  controparte del caso con ``costante vincolata'' discusso sopra è un
+  caso con ``trend vincolato'', così che le relazioni di
+  cointegrazione includono un trend, ma la differenza prima delle
+  variabili in questione no. Nel caso di un trend non vincolato, il
+  trend appare sia nelle relazioni di cointegrazione sia nelle
+  differenze prime, il che corrisponde alla presenza di un trend
+  quadratico nelle variabili (espresse in livelli).
+\end{enumerate}
+
+Per gestire i cinque casi, \app{gretl} fornisce le seguenti opzioni per i
+comandi \texttt{coint2} e \texttt{vecm}:
+\begin{center}
+  \begin{tabular}{ccl}
+    $\mu_t$ & \textit{Opzione} & \textit{Descrizione} \\ [4pt]
+    0 & \verb|--nc| & Senza costante \\
+    $\mu_0, \alpha_{\perp}'\mu_0 = 0 $ &  \verb|--rc| & Costante vincolata \\
+    $\mu_0$ & (predefinito) & Costante non vincolata \\
+    $\mu_0 + \mu_1 t , \alpha_{\perp}'\mu_1 = 0$ &  \verb|--crt| &
+     Costante + trend vincolato \\
+    $\mu_0 + \mu_1 t$ &  \verb|--ct| & 
+    Costante + trend non vincolato 
+   \end{tabular}
+\end{center}
+Si noti che le opzioni viste sopra sono mutualmente esclusive. Inoltre, è
+possibile usare l'opzione \verb|--seasonal| per aggiungere a $\mu_t$ delle
+dummy stagionali centrate. In ogni caso, i p-value sono calcolati con le
+approssimazioni indicate in Doornik (1998).
+
+\section{I test di cointegrazione di Johansen}
+\label{sec:johansen-test}
+
+I due test di cointegrazione di Johansen vengono usati per stabilire il
+rango di $\beta$, in altre parole il numero di vettori di cointegrazione
+del sistema. Essi sono il test ``$\lambda$-max'', per le ipotesi sui singoli
+autovalori, e il test ``traccia'', per le ipotesi congiunte.
+Si supponga che gli autovalori $\lambda_i$ siano ordinati dal maggiore al
+minore. L'ipotesi nulla per il test  ``$\lambda$-max'' sul
+$i$-esimo autovalore è che sia $\lambda_i = 0$. Invece, il test traccia
+corrispondente considera l'ipotesi che sia $\lambda_j = 0$ per ogni
+$j \ge i$.
+
+Il comando \cmd{coint2} di \app{gretl} esegue questi due test; la voce
+corrispondente nel menù dell'interfaccia grafica è ``Modello, Serie Storiche,
+COINT - Test di cointegrazione, Johansen''.
+
+Come nel test ADF, la distribuzione asintotica dei test varia a seconda
+della componente deterministica $\mu_t$ incluso nel VAR (si veda la sezione
+\ref{sec:coint-5cases}). Il codice seguente usa il file di dati
+\cmd{denmark}, fornito insieme a \app{gretl}, per replicare l'esempio proposto
+da Johansen nel suo libro del 1995.
+%
+\begin{code}
+open denmark
+coint2 2 LRM LRY IBO IDE --rc --seasonal
+\end{code}
+%
+In questo caso, il vettore $y_t$ nell'equazione (\ref{eq:VECM}) comprende le
+quattro variabili \cmd{LRM}, \cmd{LRY}, \cmd{IBO}, \cmd{IDE}. Il numero dei
+ritardi equivale a $p$ nella (\ref{eq:VECM}) (ossia, il numero dei ritardi del
+modello scritto in forma VAR). Di seguito è riportata parte
+dell'output:
+
+\begin{center}
+\begin{code}
+Test di Johansen:
+Numero di equazioni = 4
+Ordine dei ritardi = 2
+Periodo di stima: 1974:3 - 1987:3 (T = 53)
+
+Caso 2: costante vincolata
+Rango Autovalore Test traccia p-value   Test Lmax  p-value
+   0    0,43317     49,144 [0,1284]     30,087 [0,0286]
+   1    0,17758     19,057 [0,7833]     10,362 [0,8017]
+   2    0,11279     8,6950 [0,7645]     6,3427 [0,7483]
+   3   0,043411     2,3522 [0,7088]     2,3522 [0,7076]
+\end{code}
+\end{center}
+
+Sia il test traccia, sia quello $\lambda$-max portano ad accettare l'ipotesi nulla
+che il più piccolo autovalore valga 0 (ultima riga della tabella), quindi possiamo
+concludere che le serie non sono stazionarie. Tuttavia, qualche loro combinazione
+lineare potrebbe essere I(0), visto che il test $\lambda$-max rifiuta l'ipotesi che
+il rango di $\Pi$ sia 0 (anche se il test traccia dà un'indicazione meno netta
+in questo senso, con un p-value pari a $0.1284$).
+
+\section{Identificazione dei vettori di cointegrazione}
+\label{sec:johansen-ident}
+
+Il problema centrale nella stima dell'equazione (\ref{eq:VECM}) consiste nel
+trovare una stima di $\Pi$ che abbia rango $r$ per costruzione, così che possa
+essere scritta come $\Pi = \alpha \beta'$, dove $\beta$ è la matrice che
+contiene i vettori di cointegrazione e $\alpha$ contiene i coefficienti di
+``aggiustamento'' o ``loading'', per cui le variabili endogene rispondono
+a una deviazione dall'equilibrio nel periodo precedente.
+
+Senza ulteriore specificazione, il problema ha molte soluzioni (in effetti
+ne ha infinite). I parametri $\alpha$ e $\beta$ sono sotto-identificati: se
+tutte le colonne di $\beta$ sono vettori di cointegrazione, anche qualsiasi loro
+combinazione lineare arbitraria è un vettore di cointegrazione. In altre parole,
+se $\Pi = \alpha_0 \beta_0'$ per specifiche matrici $\alpha_0$ e $\beta_0$, allora
+$\Pi$ è anche uguale a $(\alpha_0 \Sigma)(\Sigma^{-1} \beta_0')$ per qualsiasi
+matrice conformabile e non singolare $\Sigma$. Per trovare una soluzione unica,
+è quindi necessario imporre alcune restrizioni su $\alpha$ e/o
+$\beta$. Si può dimostrare che il numero minimo di restrizioni necessarie per
+garantire l'identificazione è pari a $r^2$. Un primo passo banale consiste nel
+normalizzare un coefficiente per ogni colonna rendendolo pari a 1 (o a $-1$, a
+seconda dei gusti), il che aiuta anche a interpretare i restanti coefficienti
+come parametri delle relazioni di equilibrio; tuttavia, questo basta solo nel
+caso in cui $r=1$.
+
+Il metodo usato da \app{gretl} in modo predefinito è chiamato ``normalizzazione
+di Phillips'', o ``rappresentazione triangolare''\footnote{Per fare confronti
+  con altri studi, potrebbe essere necessario normalizzare $\beta$ in modo
+  diverso. Usando il comando \texttt{set} è possibile scrivere
+  \verb|set vecm_norm diag| per scegliere la normalizzazione che scala
+  le colonne della $\beta$ originaria in modo che valga $\beta_{ij} = 1$ per $i=j$
+  e $i \leq r$, come è mostrato nella sezione empirica di Boswijk e
+  Doornik (2004).  Una soluzione alternativa è \verb+set vecm_norm first+,
+  che scala $\beta$ in modo che gli elementi della prima riga siano pari a 1.
+  Per sopprimere del tutto la normalizzazione basta usare
+  \verb+set vecm_norm none+, mentre per tornare all'impostazione predefinita
+  \texttt{set vecm\_norm phillips}.}.
+Il punto di partenza consiste nello scrivere $\beta$ in forma partizionata, come in
+\[
+  \beta = \left[
+    \begin{array}{c} \beta_1 \\ \beta_2  \end{array}
+    \right] ,
+\]
+dove $\beta_1$ è una matrice $r \times r$ e  $\beta_2$ è $(n-r)
+\times r$. Assumendo che $\beta_1$ abbia rango pieno, $\beta$ può essere
+post-moltiplicata da $\beta_1^{-1}$, ottenendo
+\[
+  \hat{\beta} = \left[
+    \begin{array}{c} I \\ \beta_2 \beta_1^{-1}  \end{array}
+    \right] =
+    \left[
+    \begin{array}{c} I \\ -B \end{array}
+  \right]  ,
+\]
+
+I coefficienti prodotti da \app{gretl} sono i $\hat{\beta}$, mentre
+$B$ è nota come matrice dei coefficienti non vincolati. Nei termini della
+relazione di equilibrio sottostante, la normalizzazione di Phillips
+esprime il sistema di $r$ relazioni di equilibrio come
+  \begin{eqnarray*}
+    y_{1,t} & = & b_{1,r+1} y_{r+1,t} + \ldots + b_{1,n} y_{n,t} \\
+    y_{2,t} & = & b_{2,r+1} y_{r+1,t} + \ldots + b_{2,n} y_{n,t} \\
+    & \vdots & \\
+    y_{r,t} & = & b_{r,r+1} y_{r+1,t} + \ldots + b_{r,n} y_{r,t} 
+  \end{eqnarray*}
+dove le prime $r$ variabili sono espresse come funzione delle restanti
+$n-r$.
+
+Anche se la rappresentazione triangolare assicura la soluzione del problema
+statistico della stima di $\beta$, le relazioni di equilibrio che risultano
+possono essere difficili da interpretare. In questo caso, l'utente potrebbe
+voler cercare l'identificazione specificando manualmente il sistema di
+$r^2$ vincoli che \app{gretl} userà per produrre una stima di
+$\beta$.
+
+Come esempio, si consideri il sistema di domanda di moneta presentato nella
+sezione 9.6 di Verbeek (2004). Le variabili usate sono \texttt{m} (il logaritmo
+della quantità di moneta reale M1), \texttt{infl} (l'inflazione), \texttt{cpr}
+(i tassi di interesse sui ``commercial paper''), \texttt{y} (il logaritmo del
+PIL reale) e \texttt{tbr} (i tassi di interesse sui ``Treasury bill'')\footnote{Questo
+dataset è disponibile nel pacchetto \texttt{verbeek}; si veda la pagina
+  \url{http://gretl.sourceforge.net/gretl_data_it.html}.}.
+
+La stima di $\beta$ si può ottenere con questi comandi:
+\begin{code}
+open money.gdt 
+smpl 1954:1 1994:4 
+vecm 6 2 m infl cpr y tbr --rc
+\end{code}
+e la parte rilevante dei risultati è questa:
+\begin{code}
+Stime Massima verosimiglianza usando le osservazioni 1954:1-1994:4 (T = 164)
+Rango di cointegrazione = 2
+Caso 2: costante vincolata
+
+Vettori di cointegrazione (errori standard tra parentesi)
+
+m           1.0000       0.0000 
+           (0.0000)     (0.0000) 
+infl        0.0000       1.0000 
+           (0.0000)     (0.0000) 
+cpr        0.56108      -24.367 
+          (0.10638)     (4.2113) 
+y         -0.40446     -0.91166 
+          (0.10277)     (4.0683) 
+tbr       -0.54293       24.786 
+          (0.10962)     (4.3394) 
+const      -3.7483       16.751 
+          (0.78082)     (30.909) 
+\end{code}
+L'interpretazione dei coefficienti della matrice di cointegrazione $\beta$
+sarebbe più semplice se si potesse associare un significato ad ognuna delle sue
+colonne. Questo è possibile ipotizzando l'esistenza di due relazioni di lungo
+periodo: una equazione di domanda di moneta
+\[
+  \mbox{\tt m} = c_1 + \beta_1 \mbox{\tt infl} + \beta_2 \mbox{\tt
+    y} + \beta_3 \mbox{\tt tbr}
+\]
+e una equazione per premio sul rischio
+\[
+ \mbox{\tt cpr} = c_2 + \beta_4 \mbox{\tt infl} +
+   \beta_5 \mbox{\tt y} + \beta_6 \mbox{\tt tbr}
+\]
+che implica che la matrice di cointegrazione può essere normalizzata come
+\[
+  \beta = \left[
+    \begin{array}{rr}
+      -1 & 0 \\ \beta_1 & \beta_4 \\ 0 & -1 \\ \beta_2 & \beta_5
+      \\ \beta_3 & \beta_6 \\ c_1 & c_2
+    \end{array}
+    \right]
+\]
+
+Questa rinormalizzazione può essere compiuta per mezzo del comando
+\texttt{restrict}, da eseguire dopo il comando \texttt{vecm}, oppure, se si usa
+l'interfaccia grafica, scegliendo la voce dal menù ``Test, Vincoli lineari''.
+La sintassi per specificare i vincoli è abbastanza intuitiva\footnote{Si noti che
+  in questo contesto, stiamo trasgredendo la convenzione usata di solito per gli
+  indici delle matrici, visto che usiamo il primo indice per riferirci alla
+  \textit{colonna} di $\beta$ (il particolare vettore di cointegrazione).
+  Questa è la pratica usata di solito nella letteratura sulla cointegrazione,
+  visto che sono le colonne di $\beta$ (le relazioni di cointegrazione o gli
+  errori di equilibrio) che interessano in modo particolare.}:
+\begin{code}
+restrict
+  b[1,1] = -1
+  b[1,3] = 0
+  b[2,1] = 0
+  b[2,3] = -1
+end restrict
+\end{code}
+che produce
+
+\begin{code}
+Vettori di cointegrazione (errori standard tra parentesi)
+
+m          -1.0000       0.0000 
+           (0.0000)     (0.0000) 
+infl     -0.023026     0.041039 
+        (0.0054666)   (0.027790) 
+cpr         0.0000      -1.0000 
+           (0.0000)     (0.0000) 
+y          0.42545    -0.037414 
+         (0.033718)    (0.17140) 
+tbr      -0.027790       1.0172 
+        (0.0045445)   (0.023102) 
+const       3.3625      0.68744 
+          (0.25318)     (1.2870) 
+\end{code}
+
+\section{Restrizioni sovra-identificanti}
+\label{sec:johansen-overid}
+
+Uno degli scopi dell'imporre restrizioni su un sistema VECM è quello di
+raggiungere l'identificazione del sistema. Se queste restrizioni sono semplici
+normalizzazioni, esse non sono testabili e non dovrebbero avere effetti sulla
+verosimiglianza massimizzata. Tuttavia, si potrebbe anche voler formulare
+vincoli su $\beta$ e/o $\alpha$ che derivano dalla teoria economica che è alla
+base delle relazioni di equilibrio; restrizioni sostanziali di questo tipo sono
+quindi testabili attraverso il metodo del rapporto di verosimiglianza.
+
+\app{Gretl} può testare restrizioni lineari generali nella forma
+\begin{equation}
+\label{eq:Rb}
+R_b \vec{\beta} = q
+\end{equation}
+e/o
+\begin{equation}
+\label{eq:Ra}
+R_a \vec{\alpha} = 0
+\end{equation}
+%
+Si noti che la restrizione su $\beta$ può essere non-omogenea ($q \neq 0$)
+ma la restrizione su $\alpha$ deve essere omogenea. Non sono supportate le
+restrizioni non-lineari, né quelle incrociate tra $\beta$ e $\alpha$.
+Nel caso in cui $r > 1$ queste restrizioni possono essere in comune tra tutte le
+colonne di $\beta$ (o $\alpha$) o possono essere specifiche a certe colonne
+di queste matrici. Questo è il caso discusso in Boswijk (1995) e in Boswijk e Doornik
+(2004, capitolo 4.4).
+
+Le restrizioni (\ref{eq:Rb}) e (\ref{eq:Ra}) possono essere scritte in forma
+esplicita come
+\begin{equation}
+\label{eq:vecbeta}
+\vec{\beta} = H\phi + h_0
+\end{equation}
+e
+\begin{equation}
+\label{eq:vecalpha}
+\vec{\alpha'} = G\psi
+\end{equation}
+rispettivamente, dove $\phi$ e $\psi$ sono i vettori parametrici liberi
+associati con $\beta$ e $\alpha$ rispettivamente. Possiamo riferirci
+collettivamente a tutti i parametri liberi come $\theta$ (il vettore colonna
+formato dalla concatenazione di $\phi$ e $\psi$).  \app{Gretl} usa internamente
+questa rappresentazione per testare le restrizioni.
+
+Se la lista delle restrizioni passata al comando \texttt{restrict} contiene più
+restrizioni di quelle necessarie a garantire l'identificazione, viene eseguito
+un test LR; inoltre è possibile usare l'opzione \verb|--full| con il comando
+\texttt{restrict}, in modo che vengano mostrate le stime complete per il sistema
+vincolato (inclusi i termini $\Gamma_i$), e che il sistema vincolato diventi
+così il ``modello attuale'' ai fini di ulteriori test. In questo modo è
+possibile eseguire test cumulativi, come descritto nel capitolo 7 di
+Johansen (1995).
+
+\subsection{Sintassi}
+\label{sec:vecm-restr-syntax}
+
+La sintassi completa per specificare le restrizioni è un'estensione di quella
+mostrata nella sezione precedente. All'interno di un blocco
+\texttt{restrict}\ldots\texttt{end restrict} è possibile usare dichiarazione
+della forma
+\begin{center}
+  \texttt{\emph{combinazione lineare di parametri}} = \emph{\texttt{scalare}}
+\end{center}
+dove la combinazione lineare di parametri comprende la somma ponderata di
+elementi individuali di $\beta$ o $\alpha$ (ma non di entrambi nella stessa
+combinazione); lo scalare al secondo membro deve essere pari a 0 per
+combinazioni che riguardano $\alpha$, ma può essere qualsiasi numero reale per
+combinazioni che riguardano $\beta$. Di seguito vengono mostrati alcuni esempi
+di restrizioni valide:
+\begin{code}
+  b[1,1] = 1.618
+  b[1,4] + 2*b[2,5] = 0
+  a[1,3] = 0
+  a[1,1] - a[1,2] = 0
+\end{code}
+
+Una sintassi speciale è riservata al caso in cui una certa restrizione deve essere
+applicata a tutte le colonne di $\beta$: in questo caso, viene usato un indice
+per ogni termine \texttt{b} e non si usano le parentesi quadre. Quindi la
+sintassi seguente
+\begin{code}
+restrict
+  b1 + b2 = 0
+end restrict
+\end{code}
+corresponde a
+\[
+\beta = \left[
+\begin{array}{rr}
+\beta_{11} & \beta_{21} \\
+-\beta_{11} & -\beta_{21} \\
+\beta_{13} & \beta_{23} \\
+\beta_{14} & \beta_{24}
+\end{array}
+\right]
+\]
+La stessa convenzione viene usata per $\alpha$: quando si usa solo un indice per
+ogni termine \texttt{a}, la restrizione viene applicata a tutte le $r$ righe di
+$\alpha$, o in altre parole le variabili indicate sono debolmente esogene. Ad
+esempio la formulazione
+%
+\begin{code}
+restrict
+  a3 = 0
+  a4 = 0
+end restrict
+\end{code}
+%
+specifica che le variabili 3 e 4 non rispondono alla deviazione dall'equilibrio
+nel periodo precedente.
+
+Infine, è disponibile una scorciatoia per definire restrizioni complesse (al
+momento solo in relazione a $\beta$): è possibile specificare $R_b$ e $q$,
+come in $R_b \vec{\beta} = q$, dando i nomi di matrici definite in precedenza.
+Ad esempio,
+%
+\begin{code}
+matrix I4 = I(4)
+matrix vR = I4**(I4~zeros(4,1))
+matrix vq = mshape(I4,16,1)
+restrict
+  R = vR
+  q = vq
+end restrict
+\end{code}
+%
+impone manualmente la normalizzazione di Phillips sulle stime di $\beta$ per un sistema con
+rango di cointegrazione 4.
+ 
+\subsection{Un esempio}
+\label{sec:vecm-overid-ex}
+
+Brand e Cassola (2004) propongono un sistema di domanda di moneta per l'area
+Euro, in cui postulano tre relazioni di equilibrio di lungo periodo:
+%
+\begin{center}
+\begin{tabular}{ll}
+  Domanda di moneta & $m = \beta_l l + \beta_y y$ \\
+  Equazione di Fisher & $\pi = \phi l$ \\
+  Teoria delle aspettative sui & $l = s$ \\ [-4pt]
+  tassi di interesse
+\end{tabular}
+\end{center}
+%
+dove $m$ è la domanda di moneta reale, $l$ e $s$ sono i tassi di interesse a
+lungo e a breve termine, $y$ è l'output e $\pi$ è l'inflazione\footnote{Una
+  formulazione tradizionale dell'equazione di Fisher invertirebbe i ruoli delle
+  variabili nella seconda equazione, ma questo dettaglio non è rilevante in
+  questo contesto; inoltre, la teoria delle aspettative sui tassi implica che la
+  terza relazione di equilibrio dovrebbe includere una costante per il premio di
+  liquidità. In ogni caso, visto che in questo esempio il sistema è stimato con
+  il termine costante non vincolato, il premio per la liquidità viene assorbito
+  nell'intercetta del sistema e scompare da $z_t$.}. I nomi di queste variabili
+nel file di dati di \app{gretl} sono rispettivamente \verb|m_p|, \texttt{rl},
+\texttt{rs}, \texttt{y} e \texttt{infl}.
+
+Il rango di cointegrazione ipotizzato dagli autori è pari a 3, e ci sono 5
+variabili, per un totale di 15 elementi nella  matrice $\beta$. Per
+l'identificazione sono richieste $3 \times 3 = 9$ restrizioni, e un sistema
+esattamente identificato avrebbe $15 - 9 = 6$ parametri liberi. Tuttavia, le
+tre relazioni di lungo periodo ipotizzate contengono solo 3 parametri liberi,
+quindi il rango di sovraidentificazione è 3.
+
+\begin{script}[htbp]
+  \caption{Stima di un sistema di domanda di moneta con vincoli su $\beta$}
+  \label{brand-cassola-script}
+Input:
+\begin{scodebit}
+open brand_cassola.gdt
+
+# Alcune trasformazioni
+m_p = m_p*100
+y = y*100
+infl = infl/4
+rs = rs/4
+rl = rl/4
+
+# Replica della tabella 4 a pagina 824
+vecm 2 3 m_p infl rl rs y -q
+genr ll0 = $lnl
+
+restrict --full
+  b[1,1] = 1
+  b[1,2] = 0
+  b[1,4] = 0
+  b[2,1] = 0
+  b[2,2] = 1
+  b[2,4] = 0
+  b[2,5] = 0
+  b[3,1] = 0
+  b[3,2] = 0
+  b[3,3] = 1
+  b[3,4] = -1
+  b[3,5] = 0
+end restrict
+genr ll1 = $rlnl
+\end{scodebit}
+Output parziale:
+\begin{scodebit}
+Log-verosimiglianza non vincolata (lu) = 116.60268
+Log-verosimiglianza vincolata (lr) = 115.86451
+2 * (lu - lr) = 1.47635
+P(Chi-quadro(3) > 1.47635) = 0.68774
+
+Beta (vettori di cointegrazione, errori standard tra parentesi)
+
+m_p        1.0000       0.0000       0.0000 
+          (0.0000)     (0.0000)     (0.0000) 
+infl       0.0000       1.0000       0.0000 
+          (0.0000)     (0.0000)     (0.0000) 
+rl         1.6108     -0.67100       1.0000 
+         (0.62752)   (0.049482)     (0.0000) 
+rs         0.0000       0.0000      -1.0000 
+          (0.0000)     (0.0000)     (0.0000) 
+y         -1.3304       0.0000       0.0000 
+        (0.030533)     (0.0000)     (0.0000) 
+\end{scodebit}
+%$
+\end{script}
+
+L'esempio \ref{brand-cassola-script} replica la tabella 4 a pagina 824
+dell'articolo di Brand e Cassola\footnote{Fatta eccezione per quelli che
+  sembrano alcuni errori di stampa nell'articolo.}. Si noti che viene usato
+l'accessorio \verb|$lnl| dopo il comando \texttt{vecm} per salvare la
+log-verosimiglianza non vincolata e l'accessorio \verb|$rlnl| dopo il comando
+\texttt{restrict} per la sua controparte vincolata.
+
+L'esempio continua nello script~\ref{brand-cassola-tab5}, dove vengono eseguiti
+ulteriori test per controllare (a) se l'elasticità al reddito nell'equazione di
+domanda di moneta è pari a 1 ($\beta_y = 1$) e (b) se la relazione di Fisher è
+omogenea ($\phi = 1$). Visto che è stata usata l'opzione \verb|--full| con il
+comando \texttt{restrict} iniziale, è possibile applicare le restrizioni
+aggiuntive senza dover ripetere quelle precedenti. Il secondo script contiene
+alcuni comandi \texttt{printf} che non sono strettamente necessari, servono solo
+a formattare meglio i risultati. I dati portano a rifiutare entrambe le ipotesi
+aggiuntive, con p-value di $0.002$ e $0.004$.
+
+\begin{script}[htbp]
+  \caption{Test ulteriori sul sistema di domanda di moneta}
+  \label{brand-cassola-tab5}
+Input:
+\begin{scodebit}
+restrict
+  b[1,5] = -1
+end restrict
+genr ll_uie = $rlnl
+
+restrict
+  b[2,3] = -1
+end restrict
+genr ll_hfh = $rlnl
+
+# Replica della tabella 5 a pagina 824
+printf "Test su zero restrizioni nello spazio di cointegrazione:\n"
+printf "  test LR, rango = 3: chi^2(3) = %6.4f [%6.4f]\n", 2*(ll0-ll1), \
+	pvalue(X, 3, 2*(ll0-ll1))
+
+printf "Elasticità al reddito unitaria: test LR, rango = 3:\n"
+printf "  chi^2(4) = %g [%6.4f]\n", 2*(ll0-ll_uie), \
+	pvalue(X, 4, 2*(ll0-ll_uie))
+
+printf "Omogeneità nell'ipotesi di Fisher:\n"
+printf "  test LR, rango = 3: chi^2(4) = %6.3f [%6.4f]\n", 2*(ll0-ll_hfh), \
+	pvalue(X, 4, 2*(ll0-ll_hfh))
+\end{scodebit}
+Output:
+\begin{scodebit}
+Test su zero restrizioni nello spazio di cointegrazione:
+  test LR, rango = 3: chi^2(3) = 1.4763 [0.6877]
+Elasticità al reddito unitaria: test LR, rango = 3:
+  chi^2(4) = 17.2071 [0.0018]
+Omogeneità nell'ipotesi di Fisher:
+  test LR, rango = 3: chi^2(4) = 15.547 [0.0037]  
+\end{scodebit}
+\end{script}
+
+Un altro tipo di test eseguito spesso è quello dell'``esogeneità debole''.
+In questo contesto, si dice che una variabile è debolmente esogena se tutti i
+coefficienti nella riga corrispondente della matrice $\alpha$ sono pari a zero.
+In questo caso, la variabile non reagisce alle deviazioni da alcuno degli
+equilibri di lungo periodo e può essere considerata una forza autonoma dal resto
+del sistema.
+
+Il codice nell'Esempio~\ref{brand-cassola-exog} esegue questo test per ognuna
+delle variabili, replicando la prima colonna della Tabella 6 a pagina 825
+di Brand e Cassola (2004). I risultati mostrano che l'ipotesi di esogeneità
+debole può essere accettata per i tassi di interesse a lungo termine e il PIL
+reale (rispettivamente con p-value $0.07$ e $0.08$).
+
+\begin{script}[htbp]
+  \caption{Test per l'esogeneità debole}
+  \label{brand-cassola-exog}
+Input:
+\begin{scodebit}
+restrict
+  a1 = 0
+end restrict
+ts_m = 2*(ll0 - $rlnl)
+
+restrict
+  a2 = 0
+end restrict
+ts_p = 2*(ll0 - $rlnl)
+
+restrict
+  a3 = 0
+end restrict
+ts_l = 2*(ll0 - $rlnl)
+
+restrict
+  a4 = 0
+end restrict
+ts_s = 2*(ll0 - $rlnl)
+
+restrict
+  a5 = 0
+end restrict
+ts_y = 2*(ll0 - $rlnl)
+
+loop foreach i m p l s y --quiet
+  printf "\Delta $i\t%6.3f [%6.4f]\n", ts_$i, pvalue(X, 6, ts_$i)
+end loop
+\end{scodebit}
+Output (variabile, test LR, p-value):
+\begin{scodebit}
+\Delta m	18.111 [0.0060]
+\Delta p	21.067 [0.0018]
+\Delta l	11.819 [0.0661]
+\Delta s	16.000 [0.0138]
+\Delta y	11.335 [0.0786]
+\end{scodebit}
+%$
+\end{script}
+
+\subsection{Identificazione e testabilità}
+\label{sec:ident-test}
+
+Un punto che può risultare poco chiaro a proposito delle restrizioni sui VECM
+è che l'identificazione (la restrizione identifica il sistema?) e la testabilità
+(la restrizione è testabile?) sono questioni abbastanza distinte. Le restrizioni
+possono essere identificanti ma non testabili; in modo meno ovvio, possono anche
+essere testabili ma non identificanti.
+
+Questo può essere visto facilmente in un sistema a rango 1. La restrizione
+$\beta_1 = 1$ è identificante (identifica la scala di $\beta$) ma, essendo un
+semplice cambiamento di scala, non è testabile. D'altra parte, la restrizione
+$\beta_1 + \beta_2 = 0$ è testabile --- il sistema con questo requisito imposto
+avrà quasi sicuramente una minore verosimiglianza massimizzata --- ma non è
+identificante; lascia ancora aperta la scelta della scala di $\beta$.  
+
+Abbiamo visto sopra che il numero di restrizioni deve essere pari ad almeno
+$r^2$, dove $r$ è il rango di cointegrazione. Questa è una condizione necessaria
+ma non sufficiente. In effetti, quando $r>1$ può essere abbastanza difficile
+giudicare quando un certo insieme di restrizioni è identificante.
+\app{Gretl} usa il metodo suggerito da Doornik (1995), dove l'identificazione è
+valutata tramite il rango della matrice di informazione.
+
+Può essere dimostrato che per le restrizioni del tipo della (\ref{eq:vecbeta})
+e della (\ref{eq:vecalpha}) la matrice di informazione ha lo stesso rango della
+matrice Jacobiana
+%
+\[
+{\cal J}(\theta) = \left[ (I_p \otimes \beta) G : 
+                   (\alpha \otimes I_{p_1}) H \right]
+\]
+
+Una condizione sufficiente per l'identificazione è che il rango di ${\cal
+  J}(\theta)$ sia pari al numero dei parametri liberi. Il rango di questa
+matrice è valutato esaminando i suoi valori singolari in un punto scelto a caso
+dello spazio dei parametri. Agli scopi pratici trattiamo questa condizione come
+se fosse sia necessaria che sufficiente, ossia tralasciamo i casi speciali in
+cui l'identificazione potrebbe essere raggiunta senza che questa condizione sia
+soddisfatta\footnote{Si veda Boswijk e Doornik (2004, pp.\ 447--8) per la
+discussione di questo problema.}.
+
+\section{Metodi di soluzione numerica}
+\label{sec:vecm-opt}
+
+In generale, il problema della stima ML per il VECM vincolato non ha una
+soluzione in forma chiusa, quindi il massimo deve essere cercato con metodi
+numerici\footnote{L'eccezione è costituita dal caso in cui le restrizioni
+  sono omogenee, sono comuni a tutti i $\beta$ o a tutti gli $\alpha$ (nel caso
+  $r>1$), e includono solo $\beta$ o solo $\alpha$. Queste restrizioni sono
+  gestite con il metodo degli autovalori modificati proposto da Johansen (1995):
+  risolviamo direttamente lo stimatore ML, senza aver bisogno di metodi
+  iterativi.}. In alcuni casi, la convergenza può risultare difficile da
+raggiungere, e \app{gretl} fornisce vari modi di risolvere il problema.
+
+\subsection{Algoritmi switching e LBFGS}
+\label{sec:vecm-algorithms}
+
+Sono disponibili due metodi di massimizzazione in \app{gretl}: quello
+predefinito è l'algoritmo di switching proposto in Boswijk e Doornik (2004);
+l'alternativa è una variante a memoria limitata dell'algoritmo BFGS, che usa
+derivate analitiche: LBFGS. Per usare questo metodo occorre aggiungere l'opzione
+\verb+--lbfgs+ al comando \texttt{restrict}.
+
+L'algoritmo di switching funziona massimizzando esplicitamente la
+verosimiglianza ad ogni iterazione rispetto a $\hat{\phi}$, $\hat{\psi}$ e 
+$\hat{\Omega}$ (la matrice di covarianza dei residui). Questo metodo condivide
+una caratteristica con la classica procedura degli autovalori di Johansen,
+ossia: può gestire un insieme di restrizioni che non identificano completamente
+i parametri.
+
+D'altra parte, LBFGS richiede che il modello sia completamente identificato,
+quindi in alcuni casi occorrerà aggiungere alle restrizioni che interessano
+alcune normalizzazioni con lo scopo di identificare i parametri.
+Ad esempio, si può usare in tutto o in parte la normalizzazione di Phillips
+(si veda la sezione \ref{sec:johansen-ident}).
+
+Né l'algoritmo di switching né quello LBFGS garantiscono di raggiungere la soluzione ML
+globale\footnote{Nello sviluppo del codice per il test dei VECM in \app{gretl}
+  sono stati considerati un certo numero di ``casi difficili'' individuati da
+  varie fonti. Vogliamo ringraziare Luca Fanelli dell'Università di Bologna e 
+  Sven Schreiber della Goethe University di Francoforte, per aver suggerito
+  vari test per il codice VECM di \app{gretl}}: l'ottimizzatore potrebbe fermarsi
+su un massimo locale (o, nel caso dell'algoritmo di switching, su un punto di
+sella).
+
+La soluzione (o la sua mancanza) può essere sensibile al valore iniziale scelto
+per $\theta$. Per impostazione predefinita, \app{gretl} sceglie un valore
+iniziale usando un metodo deterministico basato su Boswijk (1995), ma sono
+disponibili due altre opzioni: è possibile aggiustare l'inizializzazione usando
+il metodo della ricottura simulata (con l'opzione \verb+--jitter+), oppure è
+possibile fornire esplicitamente un valore iniziale per $\theta$.
+
+Il metodo di inizializzazione predefinito è il seguente:
+%
+\begin{enumerate}
+\item Calcolare la ML non vincolata $\hat{\beta}$ usando la procedura di Johansen.
+\item Se la restrizione su $\beta$ è non-omogenea, usare il metodo proposto da
+  Boswijk (1995):
+\begin{equation}
+\phi_0 = -[(I_r \otimes \hat{\beta}_{\perp})'H]^+ 
+  (I_r \otimes \hat{\beta}_{\perp})' h_0
+\end{equation}
+dove $\hat{\beta}'_{\perp} \hat{\beta} = 0$ e $A^+$ denota l'inversa di Moore--Penrose di $A$.  Altrimenti
+\begin{equation}
+\phi_0 = (H'H)^{-1} H' \vec{\hat{\beta}}
+\end{equation}
+\item $\vec{\beta_0} = H\phi_0 + h_0$.
+\item Calcolare la ML non vincolata $\hat{\alpha}$ condizionale su
+  $\beta_0$, come da Johansen:
+\begin{equation}
+\label{eq:Jalpha}
+\hat{\alpha} = S_{01} \beta_0 (\beta'_0S_{11}\beta_0)^{-1}
+\end{equation}
+\item Se $\alpha$ è vincolata da $\vec{\alpha'} = G\psi$, allora
+  $\psi_0 = (G'G)^{-1}G'\,{\rm vec}(\hat{\alpha}')$ e
+  $\vec{\alpha'_0} = G\psi_0$.
+\end{enumerate}
+
+\subsection{Metodi di inizializzazione alternativi}
+\label{sec:vecm-alt-init}
+
+Come è stato detto in precedenza, \app{gretl} offre la possibilità di
+impostare l'inizializzazione usando la ricottura simulata.
+
+L'idea di base è questa: si inizia in un certo punto dello spazio parametrico,
+e per ognuna di $n$ iterazioni (al momento $n=4096$) si sceglie a caso un
+punto all'interno di un certo raggio di distanza dal precedente e si determina la
+verosimiglianza nel nuovo punto. Se la verosimiglianza è maggiore, si salta
+nel nuovo punto, altrimenti si salta con probabilità $P$ (e si rimane nel
+punto precedente con probabilità $1-P$). Man mano che le iterazioni procedono,
+il sistema ``si raffredda'' gradualmente, ossia il raggio delle perturbazioni
+casuali si riduce, così come la probabilità di fare un salto quando la
+verosimiglianza non aumenta.
+
+Nel corso di questa procedura vengono valutati molti punti dello spazio dei
+parametri, cominciando dal punto scelto dalla procedura deterministica, che
+chiameremo $\theta_0$. Uno di questi punti sarà il ``migliore'' nel senso che
+produce la più alta verosimiglianza: lo si chiami $\theta^*$. Questo punto può
+avere o non avere una verosimiglianza maggiore di quella di $\theta_0$. La
+procedura ha inoltre un punto finale, $\theta_n$, che può essere o non essere il
+``migliore''.
+
+La regola seguita da \app{gretl} per scegliere un valore iniziale per $\theta$
+basandosi sulla ricottura simulata è questa: usare $\theta^*$ se $\theta^* >
+\theta_0$, altrimenti usare $\theta_n$.  Ossia: se otteniamo un miglioramento
+nella verosimiglianza tramite la ricottura simulata, ne approfittiamo; d'altra
+parte, se non otteniamo un miglioramento usiamo comunque la ricottura per
+la randomizzazione del punto iniziale. La sperimentazione ha indicato che
+quest'ultimo metodo può aiutare.
+
+Se l'inizializzazione deterministica fallisce, l'alternativa alla
+randomizzazione consiste nello scegliere esplicitamente dei valori iniziali.
+L'utente può farlo passando un vettore predefinito al comando \texttt{set} con
+il parametro \texttt{initvals}, come nell'esempio
+%
+\begin{verbatim}
+set initvals myvec
+\end{verbatim}
+
+I dettagli dipendono dall'algoritmo scelto. Nel caso dell'algoritmo di
+switching ci sono due opzioni per sceglire i valori iniziali. Quella più comoda
+(per la maggior parte delle persone supponiamo) consiste nello specificare una
+matrice che contiene $\vec{\beta}$ seguito da $\vec{\alpha}$. Ad esempio:
+\begin{code}
+open denmark.gdt
+vecm 2 1 LRM LRY IBO IDE --rc --seasonals
+
+matrix BA = {1, -1, 6, -6, -6, -0.2, 0.1, 0.02, 0.03}
+set initvals BA
+restrict
+  b[1] = 1
+  b[1] + b[2] = 0
+  b[3] + b[4] = 0
+end restrict
+\end{code}
+
+In questo esempio tratto da Johansen (1995) il rango di cointegrazione è 1 e
+ci sono 4 variabili, ma il modello contiene una costante vincolata
+(opzione \verb|--rc|) così che $\beta$ ha 5 elementi. La matrice
+$\alpha$ ha 4 elementi, uno per equazione. Quindi la matrice
+\texttt{BA} può essere letta come
+\[
+\left(\beta_1, \beta_2, \beta_3, \beta_4, \beta_5,
+ \alpha_1, \alpha_2, \alpha_3, \alpha_4 \right)
+\]
+
+L'altra opzione, obbligatoria quando si usa LBFGS, consiste nello specificare i
+valori iniziali in termini dei parametri non vincolati, $\phi$ e $\psi$. Questo
+metodo è meno ovvio da comprendere: come ricordato sopra, la restrizione in
+forma implicita $R\vec{\beta} = q$ ha la forma esplicita $\vec{\beta} = H\phi +
+h_0$, dove $H = R_{\perp}$, lo spazio nullo destro di $R$. Il vettore $\phi$ è
+più corto, per il numero di restrizioni, di $\vec{\beta}$. L'utente attento
+capirà cosa occorre fare. L'altro punto di cui tenere conto è che se $\alpha$
+non è vincolato, la lunghezza \textit{effettiva} di $\psi$ è 0, visto che è
+ottimale calcolare $\alpha$ con la formula di Johansen, condizionale su $\beta$
+(equazione \ref{eq:Jalpha} sopra). Segue un esempio:
+\begin{code}
+open denmark.gdt
+vecm 2 1 LRM LRY IBO IDE --rc --seasonals
+
+matrix phi = {-8, -6}
+set initvals phi
+restrict --lbfgs
+  b[1] = 1
+  b[1] + b[2] = 0
+  b[3] + b[4] = 0
+end restrict
+\end{code}
+
+In questa formulazione più economica, l'inizializzatore specifica solo i due
+parametri liberi di $\phi$ (5 elementi in $\beta$ meno 3 restrizioni). Non c'è
+motivo di dare valori a $\psi$ visto che $\alpha$ non è vincolato.
+
+\subsection{Rimozione della scala}
+\label{sec:vecm-scale-removal}
+
+Si consideri una versione più semplice della restrizione discussa nella sezione
+precedente, ossia,
+%
+\begin{code}
+restrict
+  b[1] = 1
+  b[1] + b[2] = 0
+end restrict
+\end{code}
+
+Questa restrizione comprende un vincolo sostanziale e testabile --- che la somma di
+$\beta_1$ e $\beta_2$ sia pari a zero --- e una normalizzazione, o scalatura,
+$\beta_1 = 1$.  Sorge la questione se non sia più semplice e affidabile
+massimizzare la verosimiglianza senza imporre $\beta_1 = 1$\footnote{Dal punto di vista
+  numerico è più semplice. In linea di principio non dovrebbe fare differenza.}.
+Se così fosse, potremmo tenere nota di questa normalizzazione, rimuoverla allo
+scopo di massimizzare la verosimiglianza, e quindi re-imporla scalando il
+risultato.
+
+Purtroppo non è possibile dire in anticipo se una ``rimozione di scala'' di
+questo tipo darà risultati migliori per un certo problema di stima, ma nella
+maggior parte dei casi sembra essere così. Gretl quindi opera una rimozione di
+scala nei casi in cui è fattibile, a meno che
+\begin{itemize}
+\item l'utente non lo vieti, usando l'opzione \verb|--no-scaling| del comando
+  restrict; oppure
+\item l'utente fornisca uno specifico vettore di valori iniziali; oppure
+\item l'utente scelga l'algoritmo LBFGS per la massimizzazione.
+\end{itemize}
+
+La rimozione di scala viene giudicata non fattibile se ci sono restrizioni
+incrociate tra le colonne di $\beta$, o se ci sono restrizioni non-omogenee
+che coinvolgono più di un elemento di $\beta$.  
+
+In aggiunta, l'esperienza ha suggerito che la rimozione della scala non è
+consigliabile se il sistema è esattamente identificato con le normalizzazioni
+incluse, quindi in questo caso non viene eseguita. Per ``esattamente
+identificato'' si intende che il sistema non sarebbe identificato se una
+qualsiasi delle restrizioni fosse rimossa. Da questo punto di vista, l'esempio
+visto sopra non è esattamente identificato, visto che rimuovendo la seconda
+restrizione non si intaccherebbe l'identificazione; \app{gretl} in questo caso
+eseguirebbe la rimozione di scala a meno che l'utente non indichi altrimenti.
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "gretl-guide"
+%%% End: 

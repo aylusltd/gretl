@@ -1,0 +1,84 @@
+topsrc = @top_srcdir@
+docsrc = $(topsrc)/doc
+
+GUIDE = gretl-guide-es.pdf
+REF = gretl-ref-es.pdf
+
+TEXSRC = appendices.tex \
+	biblio.tex \
+	cli.tex \
+	datafiles.tex \
+	genr.tex \
+	graphs.tex \
+	gretl-guide-es.tex \
+	gretl-ref-es.tex \
+	introduction.tex \
+	looping.tex \
+	modes.tex \
+	native.tex \
+	panel.tex \
+	reftables.tex \
+	starting.tex \
+	trouble.tex \
+	vecm.tex \
+	cmdref.tex \
+	optarg.tex \
+	var.tex
+
+WEBDIR = /home/cottrell/stats/esl/website
+
+all: $(GUIDE) $(REF)
+
+$(GUIDE): gretl-guide-es.tex links date.tex
+	pdflatex $<
+	pdflatex $<
+	pdflatex $<
+
+$(REF): gretl-ref-es.tex links cmdtex topiclist date.tex
+	pdflatex $<
+	pdflatex $<
+	pdflatex $<
+
+gretl-guide-es.tex:
+	if [ ! -f $@ ] ; then ln -sf $(docsrc)/tex_es/$@ . ; fi
+
+gretl-ref-es.tex:
+	if [ ! -f $@ ] ; then ln -sf $(docsrc)/tex_es/$@ . ; fi
+
+.PHONY : links cmdtex textables onepass refpass topiclist install clean
+
+links:
+	rm -f gretl.sty && ln -s ../gretl.sty ./gretl.sty
+	rm -f figures && ln -s $(docsrc)/figures_es ./figures
+	for f in $(TEXSRC) ; do \
+	if [ ! -f $$f ] ; then ln -sf $(docsrc)/tex_es/$$f . ; fi ; done
+
+cmdtex:
+	$(MAKE) -C ../commands cmdtex_es
+
+topiclist:
+	$(MAKE) -C ../commands topiclist_es
+
+textables_es:
+	$(MAKE) -C ../commands textables_es
+
+date.tex:
+	LANG=es_ES date "+%B %Y" | sed 's/^[a-z]/\u&/' > $@
+
+onepass: gretl-guide-es.tex links
+	pdflatex gretl-guide-es
+
+refpass: gretl-ref-es.tex links cmdtex topiclist
+	pdflatex gretl-ref-es
+
+install: $(GUIDE) $(REF)
+	cp $(GUIDE) $(REF) $(WEBDIR)
+
+clean:
+	rm -f *.aux *.log *.out *.toc *.tpt *.pdf
+	rm -f refbody.tex funcbody.tex cmdtopics.tex
+	rm -f ../commands/textables_es ../commands/topiclist_es 
+	rm -f ../commands/cmdtex_es 
+
+distclean: clean
+	rm -rf CVS

@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE gretldata SYSTEM "gretldata.dtd">
+
+<gretldata version="1.3" name="murder_rates" frequency="1" startobs="1" endobs="44" type="cross-section">
+<description>These data originate from McManus (1985), &quot;Estimates of the Deterrent 
+Effect of Capital Punishment: The Importance of the Researcher’s Prior 
+Beliefs&quot;, Journal of Political Economy 93 (April 1985), pp. 417-425. 
+
+They were used in Maddala (1992), Introduction to Econometrics, 2e,
+New York, MacMillan to illustrate a probit model. 
+
+They make for an excellent example of the &quot;perfect prediction&quot; problem, 
+as illustrated by Stokes (2004), &quot;On the advantage of using two or more econometric software systems to solve the same problem&quot;, Journal of 
+Economic and Social Measurement, 29, pp. 307-320.
+</description>
+<variables count="7">
+<variable name="executions"
+ label="Average number of executions 1946–1950/convictions in 1950"
+/>
+<variable name="time"
+ label="Median time served convicted murders"
+/>
+<variable name="income"
+ label="Median family income of families in 1949 (thousands of dollars)"
+/>
+<variable name="lfp"
+ label="Labor force participation rate in 1950 (expressed as a percent)"
+/>
+<variable name="noncauc"
+ label="Proportion of population that is nonwhite in 1950"
+/>
+<variable name="southern"
+ label="Dummy Variable, 1 for southern states, 0 for others"
+ discrete="true"
+/>
+<variable name="D1"
+ label="(executions&gt;0)"
+ discrete="true"
+/>
+</variables>
+<observations count="44" labels="false">
+<obs>0.035 47 1.1 51.2 0.321 1 1 </obs>
+<obs>0.081 58 0.92 48.5 0.224 1 1 </obs>
+<obs>0.012 82 1.72 50.8 0.127 0 1 </obs>
+<obs>0.07 100 2.18 54.4 0.063 0 1 </obs>
+<obs>0.062 222 1.75 52.4 0.021 0 1 </obs>
+<obs>0.1 164 2.26 56.7 0.027 0 1 </obs>
+<obs>0.05 161 2.07 54.6 0.139 1 1 </obs>
+<obs>0.054 70 1.43 52.7 0.218 1 1 </obs>
+<obs>0.086 219 1.92 52.3 0.008 0 1 </obs>
+<obs>0 81 1.82 53 0.012 0 0 </obs>
+<obs>0.018 209 2.34 55.4 0.076 0 1 </obs>
+<obs>0.045 182 2.12 53.5 0.299 0 1 </obs>
+<obs>0.04 185 1.81 51.6 0.04 0 1 </obs>
+<obs>0.045 104 1.35 48.5 0.069 1 1 </obs>
+<obs>0.125 126 1.26 49.3 0.33 1 1 </obs>
+<obs>0.06 192 2.07 53.9 0.017 0 1 </obs>
+<obs>0.055 95 2.04 55.7 0.166 1 1 </obs>
+<obs>0 245 1.55 51.2 0.003 0 0 </obs>
+<obs>0 97 1.89 54 0.01 0 0 </obs>
+<obs>0.041 177 1.68 52.2 0.076 0 1 </obs>
+<obs>0.063 125 0.76 51.1 0.454 1 1 </obs>
+<obs>0 56 1.96 54 0.032 0 0 </obs>
+<obs>0.086 85 1.29 55 0.266 1 1 </obs>
+<obs>0.04 199 1.81 52.9 0.018 0 1 </obs>
+<obs>0 298 1.72 53.7 0.038 0 0 </obs>
+<obs>0.03 145 2.39 55.8 0.067 0 1 </obs>
+<obs>0.029 78 1.68 50.4 0.075 0 1 </obs>
+<obs>0.4 144 2.29 58.8 0.064 0 1 </obs>
+<obs>0.126 178 2.34 54.5 0.065 0 1 </obs>
+<obs>0.122 146 2.21 53.5 0.065 0 1 </obs>
+<obs>0.091 132 1.42 48.8 0.09 1 1 </obs>
+<obs>0.075 98 1.97 54.5 0.016 0 1 </obs>
+<obs>0.069 120 2.12 52.1 0.061 0 1 </obs>
+<obs>0 148 1.9 56 0.019 0 0 </obs>
+<obs>0.216 123 1.15 56.2 0.389 1 1 </obs>
+<obs>0.1 282 1.7 53.3 0.037 0 1 </obs>
+<obs>0.038 79 1.24 50.9 0.161 1 1 </obs>
+<obs>0.04 34 1.55 53.2 0.127 1 1 </obs>
+<obs>0 104 2.04 51.7 0.017 0 0 </obs>
+<obs>0.032 91 1.59 54.3 0.222 1 1 </obs>
+<obs>0.086 199 2.07 53.7 0.026 0 1 </obs>
+<obs>0 101 2 54.7 0.012 0 0 </obs>
+<obs>0.033 109 1.84 47 0.057 1 1 </obs>
+<obs>0 117 2.04 56.9 0.022 0 0 </obs>
+</observations>
+</gretldata>

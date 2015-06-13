@@ -1,0 +1,105 @@
+\documentclass[oneside]{book}
+\usepackage[T1]{fontenc}
+\usepackage{url,verbatim,fancyvrb,color,gretl,appendix}
+\usepackage{array,longtable}
+\usepackage[latin1]{inputenc}
+\usepackage[pdftex]{graphicx}
+\usepackage[spanish]{babel}
+\usepackage[compat2,a4paper,hmargin=1.1in,top=.5in]{geometry}
+\usepackage[pdftex,hyperfootnotes=false]{hyperref}
+
+%% \pdfimageresolution=120
+\hypersetup{pdftitle={Guía de Instrucciones de Gretl},
+            pdfsubject={GNU Regression, Econometrics and Time Series Library},
+            pdfauthor={Allin Cottrell},
+            colorlinks=true,
+            linkcolor=blue,
+            urlcolor=red,
+            plainpages=false
+}
+
+\begin{document}
+
+\VerbatimFootnotes
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{1ex}
+
+%% titlepage
+
+\thispagestyle{empty}
+
+\begin{center}
+\pdfbookmark[1]{Guía de Instrucciones de Gretl}{titlepage}
+
+\gtitle{Guía de Instrucciones}
+
+\gsubtitle{Gnu Regression, Econometrics and Time-series}
+
+{\large \sffamily 
+Allin Cottrell\\
+Department of Economics\\
+Wake Forest university
+}
+
+\vspace{20pt}
+{\large \sffamily 
+Riccardo ``Jack'' Lucchetti\\
+Dipartimento di Economia\\
+Università Politecnica delle Marche
+}
+
+%{\large \sffamily 
+%Traducción española \\
+%Parmeeta Bhogal y Ignacio Díaz-Emparanza
+%}
+
+%% \vspace{20pt}
+%% {\large \sffamily Noviembre, 2005}
+
+\end{center}
+\clearpage
+
+%% end titlepage, begin license page
+
+\thispagestyle{empty}
+
+\pdfbookmark[1]{Licencia}{license}
+
+\vspace*{2in}
+
+Copyright \copyright\ 2001--2005 Allin Cottrell
+
+Copyright de la traducción española: \copyright\ 2006 Ignacio
+Díaz-Emparanza (Basado en la traducción del manual de 2003 de Parmeeta
+Bhogal e Ignacio Díaz-Emparanza)
+
+Este documento puede ser copiado, distribuido y/o modificado bajo los
+términos de la \textit{GNU Free Documentation License}, Versión 1.1 o
+cualquiera de las versiones posteriores publicadas por la Free
+Software Foundation (véase
+\url{http://www.gnu.org/licenses/fdl.html}).  
+
+Se agradece la financiación de la Universidad del País Vasco, a través
+del grupo de investigación 9/UPV-00038.321-13503/2001, para la
+traducción de este manual.
+
+\clearpage
+
+%% end license page, start table of contents
+\pdfbookmark[1]{Índice general}{contents}
+
+\pagenumbering{Roman}
+\pagestyle{headings}
+
+\tableofcontents
+
+\clearpage
+\pagenumbering{arabic}
+
+\include{cmdref}
+%% \include{funcref}
+\include{optarg}
+\include{reftables}
+
+\end{document}

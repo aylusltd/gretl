@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE gretldata SYSTEM "gretldata.dtd">
+
+<gretldata version="1.3" name="ooballot" frequency="1" startobs="1" endobs="87" type="cross-section">
+<description>Votes on ratification of Microsoft's &quot;Office Open XML&quot; as an ISO
+standard, September 2007, plus information on the ISO status of
+the countries concerned and their corruption level as measured by
+Transparency International's 2006 CPI index (Corruption Perceptions 
+Index).  See http://www.effi.org/blog/kai-2007-09-05.en.html ; also
+http://www.groklaw.net/staticpages/index.php?page=20051216153153504
+
+Vote: codification of the country's vote: 0 = Disapproval, 1 =
+ Abstention; 2 = Approval with comments; 3 = Approval (outright)
+
+Status: 0 = No formal ISO status; 1 = Observer status, 2 = Participant
+ status, 3 = Secretariat (USA)
+
+CPI: Corruption Perceptions Index: range 1 to 10: low values indicate
+ high perceived corruption.
+
+</description>
+<variables count="3">
+<variable name="Vote"
+ label="0 = Disapproval to 3 = unconditional Approval"
+ discrete="true"
+/>
+<variable name="Status"
+ label="Country's ISO status code"
+ discrete="true"
+/>
+<variable name="CPI"
+ label="Corruption perceptions index (lower = more corruption)"
+/>
+</variables>
+<observations count="87" labels="true">
+<obs label="Finland">1 2 9.6 </obs>
+<obs label="NewZealand">0 2 9.6 </obs>
+<obs label="Denmark">0 2 9.5 </obs>
+<obs label="Singapore">2 2 9.4 </obs>
+<obs label="Switzerland">2 2 9.1 </obs>
+<obs label="Norway">0 2 8.8 </obs>
+<obs label="Australia">1 2 8.7 </obs>
+<obs label="Netherlands">1 2 8.7 </obs>
+<obs label="Austria">2 1 8.6 </obs>
+<obs label="Luxembourg">1 1 8.6 </obs>
+<obs label="UK">0 2 8.6 </obs>
+<obs label="Canada">0 2 8.5 </obs>
+<obs label="Germany">2 2 8 </obs>
+<obs label="Japan">0 2 7.6 </obs>
+<obs label="France">0 2 7.4 </obs>
+<obs label="Ireland">0 2 7.4 </obs>
+<obs label="Belgium">1 2 7.3 </obs>
+<obs label="Chile">1 1 7.3 </obs>
+<obs label="USA">2 3 7.3 </obs>
+<obs label="Spain">1 2 6.8 </obs>
+<obs label="Barbados">3 0 6.7 </obs>
+<obs label="Portugal">2 1 6.6 </obs>
+<obs label="Malta">2 2 6.4 </obs>
+<obs label="Slovenia">1 2 6.4 </obs>
+<obs label="Uruguay">2 2 6.4 </obs>
+<obs label="UAE">3 0 6.2 </obs>
+<obs label="Qatar">3 0 6 </obs>
+<obs label="Israel">1 1 5.9 </obs>
+<obs label="Cyprus">3 2 5.6 </obs>
+<obs label="Jordan">2 0 5.3 </obs>
+<obs label="Mauritius">1 0 5.1 </obs>
+<obs label="KoreanRepublic">0 2 5.1 </obs>
+<obs label="Malaysia">1 2 5 </obs>
+<obs label="Italy">1 2 4.9 </obs>
+<obs label="CzechRepublic">0 2 4.8 </obs>
+<obs label="Kuwait">3 0 4.8 </obs>
+<obs label="SouthAfrica">0 2 4.6 </obs>
+<obs label="Tunisia">2 1 4.6 </obs>
+<obs label="Greece">2 1 4.4 </obs>
+<obs label="CostaRica">3 1 4.1 </obs>
+<obs label="Bulgaria">2 1 4 </obs>
+<obs label="Colombia">2 1 3.9 </obs>
+<obs label="Turkey">2 2 3.8 </obs>
+<obs label="Jamaica">3 2 3.7 </obs>
+<obs label="Poland">2 1 3.7 </obs>
+<obs label="Lebanon">3 2 3.6 </obs>
+<obs label="Thailand">0 1 3.6 </obs>
+<obs label="Cuba">3 1 3.5 </obs>
+<obs label="Croatia">3 1 3.4 </obs>
+<obs label="Brazil">0 1 3.3 </obs>
+<obs label="China">0 2 3.3 </obs>
+<obs label="Egypt">3 1 3.3 </obs>
+<obs label="Ghana">2 0 3.3 </obs>
+<obs label="India">0 2 3.3 </obs>
+<obs label="Mexico">1 1 3.3 </obs>
+<obs label="Peru">1 1 3.3 </obs>
+<obs label="SaudiArabia">3 2 3.3 </obs>
+<obs label="Morocco">3 1 3.2 </obs>
+<obs label="TrinidadTobago">1 2 3.2 </obs>
+<obs label="Panama">3 0 3.1 </obs>
+<obs label="Romania">3 1 3.1 </obs>
+<obs label="SriLanka">3 1 3.1 </obs>
+<obs label="Serbia">3 1 3 </obs>
+<obs label="Argentina">1 1 2.9 </obs>
+<obs label="Armenia">3 1 2.9 </obs>
+<obs label="BosniaHerzegovi">3 0 2.9 </obs>
+<obs label="Syria">3 0 2.9 </obs>
+<obs label="Tanzania">3 0 2.9 </obs>
+<obs label="Ukraine">3 1 2.8 </obs>
+<obs label="Iran">0 2 2.7 </obs>
+<obs label="Kazakhstan">3 2 2.6 </obs>
+<obs label="VietNam">1 1 2.6 </obs>
+<obs label="Philippines">0 1 2.5 </obs>
+<obs label="Russia">3 1 2.5 </obs>
+<obs label="Azerbaijan">3 2 2.4 </obs>
+<obs label="Zimbabwe">1 0 2.4 </obs>
+<obs label="Ecuador">0 2 2.3 </obs>
+<obs label="Venezuela">2 2 2.3 </obs>
+<obs label="Congo">3 0 2.2 </obs>
+<obs label="Kenya">2 2 2.2 </obs>
+<obs label="Nigeria">3 0 2.2 </obs>
+<obs label="Pakistan">3 2 2.2 </obs>
+<obs label="Belarus">3 1 2.1 </obs>
+<obs label="CotedIvoire">3 2 2.1 </obs>
+<obs label="Uzbekistan">3 0 2.1 </obs>
+<obs label="Bangladesh">3 0 2 </obs>
+<obs label="Fiji">3 0 NA </obs>
+</observations>
+</gretldata>

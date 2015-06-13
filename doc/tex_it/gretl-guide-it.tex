@@ -1,0 +1,159 @@
+\documentclass[oneside]{book}
+\usepackage[T1]{fontenc}
+\usepackage{url,verbatim,fancyvrb,appendix}
+\usepackage{pifont}
+\usepackage[latin1]{inputenc}
+\usepackage[pdftex]{graphicx}
+\usepackage[authoryear]{natbib}
+\usepackage{color,gretl}
+\usepackage[italian]{babel}
+\usepackage[a4paper,body={15.4cm,24.7cm},top=2cm,left=2.8cm]{geometry}
+\usepackage[pdftex,hyperfootnotes=false]{hyperref}
+\usepackage{dcolumn,amsmath,bm}
+\usepackage[bottom]{footmisc}
+
+\allowdisplaybreaks[1]
+
+%% \pdfimageresolution=120
+\hypersetup{pdftitle={Guida all'uso di Gretl},
+            pdfsubject={GNU Regression, Econometrics and Time Series Library},
+            pdfauthor={Allin Cottrell},
+            colorlinks=true,
+            linkcolor=blue,
+            urlcolor=red,
+            bookmarks=true,
+            bookmarksnumbered=true,
+            plainpages=false
+}
+
+% ------------- custom commands -------------------------------------------
+\newcommand{\LogLik}{\ensuremath\ell}
+\newcommand{\stackunder}[2]{\ensuremath\mathrel{\mathop{#2}\limits_{#1}}}
+\newcommand{\pder}[2]{\frac{\ensuremath\partial #1}{\partial #2}}
+\newcommand{\convp}{\stackrel{\mathrm{p}}{\longrightarrow}}
+\newcommand{\convd}{\stackrel{\mathrm{d}}{\longrightarrow}}
+\renewcommand{\vec}[1]{{\rm vec}(#1)}
+% -------------------------------------------------------------------------
+
+\begin{document}
+
+\renewcommand{\scriptname}{Esempio}
+\renewcommand{\GCR}{\textit{Guida ai comandi di gretl}}
+\renewcommand{\GUG}{\textit{Guida all'uso di gretl}}
+
+\VerbatimFootnotes
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{1ex}
+\setcounter{tocdepth}{1}
+
+%% titlepage
+
+\thispagestyle{empty}
+
+\begin{center}
+\pdfbookmark[1]{Guida all'uso di gretl}{titlepage}
+
+\gtitle{Guida all'uso di gretl}
+
+\gsubtitle{Gnu Regression, Econometrics and Time-series library}
+
+{\large \sffamily 
+Allin Cottrell\\
+Department of Economics\\
+Wake Forest university\\
+
+\vspace{20pt}
+Riccardo ``Jack'' Lucchetti\\
+Dipartimento di Economia\\
+Università Politecnica delle Marche\\
+
+\vspace{20pt}
+Cristian Rigamonti\\
+(traduzione italiana)\\
+
+\vspace{20pt}
+%\input date
+% The Italian version is not currently up to date
+Febbraio 2008
+
+\textcolor{red}{ATTENZIONE: questa traduzione è aggiornata alla versione 1.7.1 di \app{gretl}.\\
+Per versioni successive del programma si rimanda alla documentazione in inglese.}
+}
+
+\end{center}
+\clearpage
+
+%% end titlepage, begin license page
+
+\thispagestyle{empty}
+
+\pdfbookmark[1]{Licenza}{license}
+
+\vspace*{2in}
+
+È garantito il permesso di copiare, distribuire e/o modificare questo
+documento seguendo i termini della \emph{Licenza per Documentazione
+  Libera GNU}, Versione 1.1 o ogni versione successiva pubblicata
+dalla Free Software Foundation (si veda
+\url{http://www.gnu.org/licenses/fdl.html}).
+
+\clearpage
+
+%% end license page, start table of contents
+\pdfbookmark[1]{Indice}{contents}
+
+\pagenumbering{roman}
+\pagestyle{headings}
+
+\tableofcontents
+
+\clearpage
+\pagenumbering{arabic}
+
+\include{introduction}
+
+\part{Uso del programma}
+
+\include{starting}
+\include{modes}
+\include{datafiles}
+\include{genr}
+\include{sampling}
+\include{graphs}
+\include{discrete}
+\include{looping}
+\include{functions}
+\include{persistent}
+\include{matrices}
+\include{cheatsheet}
+
+\part{Metodi econometrici}
+
+\include{robust_vcv}
+\include{panel}
+\include{nls}
+\include{mle}
+\include{gmm}
+\include{criteria}
+\include{timeseries}
+\include{vecm}
+\include{probit}
+
+\part{Dettagli tecnici}
+
+\include{gretltex}
+\include{trouble}
+\include{cli}
+
+\part{Appendici}
+
+\begin{appendices}
+\include{appendices}
+\end{appendices}
+
+\clearpage
+
+\include{biblio}
+
+\end{document}
